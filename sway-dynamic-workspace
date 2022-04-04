@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+
+import json
+import subprocess
+import os
+import sys
+
+
+def get_workspace_ids(node_tree_dict):
+    top_idx = 0
+    second_idx = 0
+    result = list()
+    for top_nodes in node_tree_dict["nodes"]:
+        for second_nodes in top_nodes["nodes"]:
+            if second_nodes.get("num") and second_nodes["num"] not in result:
+                result.append(second_nodes["num"])
+    return sorted(result)
+
+def get_nodes_on_workspace(node_tree_dict, workspace_id):
+    top_idx = 0
+    second_idx = 0
+    result = list()
+    for top_nodes in node_tree_dict["nodes"]:
+        for second_nodes in top_nodes["nodes"]:
+            if second_nodes.get("num") and second_nodes["num"] not in result:
+                if second_nodes["num"] == workspace_id:
+                    return second_nodes["nodes"]
+    return result
+
+
+def create_next_workspace(node_tree_dict):
+    next_workspace_num = get_workspace_ids(node_tree_dict)[-1] + 1
+    os.system("swaymsg workspace {0}".format(next_workspace_num))
+    return next_workspace_num
+
+
+def get_current_node(node_tree_dict):
+    top_idx = 0
+    second_idx = 0
+    for top_nodes in node_tree_dict["nodes"]:
+        for second_nodes in top_nodes["nodes"]:
+            if second_nodes.get("nodes"):
+                for third_nodes in second_nodes["nodes"]:
+                    if third_nodes["focused"]:
+                        return third_nodes
+            if second_nodes.get("floating_nodes"):
+                for third_nodes in second_nodes["floating_nodes"]:
+                    if third_nodes["focused"]:
+                        return third_nodes
+    return {}
+
+
+def get_tree():
+    json_str = subprocess.check_output(["swaymsg", "-t", "get_tree"])
+    return json.loads(json_str)
+
+
+def get_workspace_id_from_node_id(node_tree_dict, node_id):
+    top_idx = 0
+    second_idx = 0
+    result = list()
+    for top_nodes in node_tree_dict["nodes"]:
+        for second_nodes in top_nodes["nodes"]:
+            if second_nodes.get("num"):
+                if second_nodes.get("nodes"):
+                    if second_nodes.get("nodes"):
+                        for third_nodes in second_nodes["nodes"]:
+                            if third_nodes["id"] == node_id:
+                                return second_nodes["num"]
+                    if second_nodes.get("floating_nodes"):
+                        for third_nodes in second_nodes["floating_nodes"]:
+                            if third_nodes["id"] == node_id:
+                                return second_nodes["num"]
+    return -1
+
+
+def maximize():
+    node_tree = get_tree()
+    current_node = get_current_node(node_tree)
+    current_node_id = current_node["id"]
+    current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+    workspaces = get_workspace_ids(node_tree)
+    if (current_workspace != workspaces[0]):
+        next_workspace = workspaces[0]
+    else:
+        next_workspace = create_next_workspace(node_tree)
+        
+    cmd = "swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(current_node["id"], next_workspace)
+    os.system(cmd)
+
+
+def next_or_new_workspace():
+    node_tree = get_tree()
+    current_node = get_current_node(node_tree)
+    current_node_id = current_node["id"]
+    current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+    workspaces = get_workspace_ids(node_tree)
+    if current_workspace == workspaces[-1]:
+        create_next_workspace(node_tree)
+    else:
+        os.system("swaymsg workspace next")
+
+
+def prev_workspace():
+    node_tree = get_tree()
+    current_node = get_current_node(node_tree)
+    if bool(current_node):
+        current_node_id = current_node["id"]
+        current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+        workspaces = get_workspace_ids(node_tree)
+        if current_workspace != workspaces[0]:
+            os.system("swaymsg workspace prev")
+    else:
+        os.system("swaymsg workspace prev")
+
+
+def toggle_focus():
+    node_tree = get_tree()
+    current_node = get_current_node(node_tree)
+    current_node_id = current_node["id"]
+    current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+    nodes = get_nodes_on_workspace(node_tree, current_workspace)
+    node_ids = sorted([i["id"] for i in nodes])
+    matched = False
+    found = False
+    next_node = -1
+    for next_node in node_ids:
+        if not matched:
+            if next_node == current_node_id:
+                matched = True
+                continue
+        else:
+            found = True
+            break
+
+    if not found:
+        next_node = node_ids[0]
+
+    os.system("swaymsg [con_id={0}] focus".format(next_node))
+
+
+def swap_nodes():
+    node_tree = get_tree()
+    current_node = get_current_node(node_tree)
+    current_node_id = current_node["id"]
+    current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+    nodes = get_nodes_on_workspace(node_tree, current_workspace)
+    next_node = -1
+    found = False
+    matched = False
+    prev = False
+    idx = -1
+    for next_node in nodes:
+        idx += 1
+        if next_node["id"] == current_node_id:
+            found = True
+            continue
+        if found:
+            matched = True
+            break
+
+    if not matched:
+        prev = True
+        next_node = nodes[0]
+
+    if matched or prev:
+        os.system("swaymsg swap container with con_id {}".format(next_node["id"]))
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "next":
+            next_or_new_workspace()
+        elif sys.argv[1] == "prev":
+            prev_workspace()
+        elif sys.argv[1] == "toggle-focus":
+            toggle_focus()
+        elif sys.argv[1] == "swap":
+            swap_nodes()
+    else:
+        maximize()
