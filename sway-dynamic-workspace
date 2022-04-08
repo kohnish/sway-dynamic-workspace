@@ -4,27 +4,51 @@ import json
 import subprocess
 import os
 import sys
+import copy
 
 
 def get_workspace_ids(node_tree_dict):
-    top_idx = 0
-    second_idx = 0
-    result = list()
-    for top_nodes in node_tree_dict["nodes"]:
-        for second_nodes in top_nodes["nodes"]:
-            if second_nodes.get("num") and second_nodes["num"] not in result:
-                result.append(second_nodes["num"])
+    node_trees = []
+    node_trees.append(node_tree_dict["nodes"])
+    current_workspace_id = -1;
+    result = []
+    for node_list in node_trees:
+        for node in node_list:
+            if node.get("num"):
+                result.append(node["num"])
+
+            if node.get("nodes"):
+                node_trees.append(node["nodes"])
+            if node.get("floating_nodes"):
+                node_trees.append(node["floating_nodes"])
     return sorted(result)
 
+
 def get_nodes_on_workspace(node_tree_dict, workspace_id):
-    top_idx = 0
-    second_idx = 0
-    result = list()
-    for top_nodes in node_tree_dict["nodes"]:
-        for second_nodes in top_nodes["nodes"]:
-            if second_nodes.get("num") and second_nodes["num"] not in result:
-                if second_nodes["num"] == workspace_id:
-                    return second_nodes["nodes"]
+    node_trees = []
+    node_trees.append(node_tree_dict["nodes"])
+    current_workspace_id = -1;
+    workspace_nodes = []
+    result = []
+    for node_list in node_trees:
+        for node in node_list:
+            if node.get("num"):
+                workspace_nodes.append(node["nodes"])
+                workspace_nodes.append(node["floating_nodes"])
+                for workspace_node_list in workspace_nodes:
+                    for work_node in workspace_node_list:
+                        if work_node.get("nodes"):
+                            workspace_nodes.append(work_node["nodes"])
+                        if work_node.get("floating_nodes"):
+                            workspace_nodes.append(work_node["floating_nodes"])
+                        if node["num"] == workspace_id:
+                            result.append(work_node)
+
+
+            if node.get("nodes"):
+                node_trees.append(node["nodes"])
+            if node.get("floating_nodes"):
+                node_trees.append(node["floating_nodes"])
     return result
 
 
@@ -35,18 +59,16 @@ def create_next_workspace(node_tree_dict):
 
 
 def get_current_node(node_tree_dict):
-    top_idx = 0
-    second_idx = 0
-    for top_nodes in node_tree_dict["nodes"]:
-        for second_nodes in top_nodes["nodes"]:
-            if second_nodes.get("nodes"):
-                for third_nodes in second_nodes["nodes"]:
-                    if third_nodes["focused"]:
-                        return third_nodes
-            if second_nodes.get("floating_nodes"):
-                for third_nodes in second_nodes["floating_nodes"]:
-                    if third_nodes["focused"]:
-                        return third_nodes
+    node_trees = []
+    node_trees.append(node_tree_dict["nodes"])
+    for node_list in node_trees:
+        for node in node_list:
+            if node.get("nodes"):
+                node_trees.append(node["nodes"])
+            if node.get("floating_nodes"):
+                node_trees.append(node["floating_nodes"])
+            if (node["focused"] == True):
+                return node
     return {}
 
 
@@ -56,22 +78,31 @@ def get_tree():
 
 
 def get_workspace_id_from_node_id(node_tree_dict, node_id):
-    top_idx = 0
-    second_idx = 0
-    result = list()
-    for top_nodes in node_tree_dict["nodes"]:
-        for second_nodes in top_nodes["nodes"]:
-            if second_nodes.get("num"):
-                if second_nodes.get("nodes"):
-                    if second_nodes.get("nodes"):
-                        for third_nodes in second_nodes["nodes"]:
-                            if third_nodes["id"] == node_id:
-                                return second_nodes["num"]
-                    if second_nodes.get("floating_nodes"):
-                        for third_nodes in second_nodes["floating_nodes"]:
-                            if third_nodes["id"] == node_id:
-                                return second_nodes["num"]
-    return -1
+    node_trees = []
+    node_trees.append(node_tree_dict["nodes"])
+    current_workspace_id = -1;
+    workspace_nodes = []
+    for node_list in node_trees:
+        for node in node_list:
+            if node.get("num"):
+                workspace_nodes.append(node["nodes"])
+                workspace_nodes.append(node["floating_nodes"])
+                for workspace_node_list in workspace_nodes:
+                    for work_node in workspace_node_list:
+                        if work_node.get("nodes"):
+                            workspace_nodes.append(work_node["nodes"])
+                        if work_node.get("floating_nodes"):
+                            workspace_nodes.append(work_node["floating_nodes"])
+                        if work_node["id"] == node_id:
+                            return node["num"]
+
+            if node.get("nodes"):
+                node_trees.append(node["nodes"])
+            if node.get("floating_nodes"):
+                node_trees.append(node["floating_nodes"])
+            if (node["id"] == node_id):
+                return current_workspace_id
+    return current_workspace_id
 
 
 def maximize():
@@ -94,6 +125,8 @@ def next_or_new_workspace():
     current_node = get_current_node(node_tree)
     current_node_id = current_node["id"]
     current_workspace = get_workspace_id_from_node_id(node_tree, current_node_id)
+    if current_workspace == -1:
+        return
     workspaces = get_workspace_ids(node_tree)
     if current_workspace == workspaces[-1]:
         create_next_workspace(node_tree)
@@ -179,3 +212,4 @@ if __name__ == "__main__":
             swap_nodes()
     else:
         maximize()
+

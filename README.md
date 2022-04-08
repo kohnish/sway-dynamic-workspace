@@ -1,6 +1,10 @@
 # sway-dynamic-workspace
 Enable Gnome like dynamic workspace
 
+# ToDo
+1. Fix the mess
+2. Support multiple monitors
+
 # How to use
 1. Install sway-dynamic-workspace script in your $PATH.  
    
