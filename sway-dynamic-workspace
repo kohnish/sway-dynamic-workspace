@@ -31,9 +31,9 @@ def get_current_node_info(node_tree_dict):
                 workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
                 if ws_node.get("visible"):
                     node_info.nodes.append(Node(ws_node["id"], node["num"]))
-                if ws_node["focused"]:
-                    node_info.curr_node = ws_node["id"]
-                    node_info.curr_workspace = node["num"]
+                    if ws_node["focused"]:
+                        node_info.curr_node = ws_node["id"]
+                        node_info.curr_workspace = node["num"]
         all_nodes += node["nodes"] + node["floating_nodes"]
     return node_info
 
