@@ -4,7 +4,6 @@ import json
 import subprocess
 import os
 import sys
-import copy
 
 
 @dataclass
@@ -51,8 +50,7 @@ def maximize():
     else:
         next_workspace = node_info.workspaces[-1] + 1
 
-    cmd = "swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(node_info.curr_node, next_workspace)
-    os.system(cmd)
+    os.system("swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(node_info.curr_node, next_workspace))
 
 
 def next_or_new_workspace():
@@ -97,3 +95,4 @@ if __name__ == "__main__":
             os.system("swaymsg swap container with con_id {}".format(next_node()))
     else:
         maximize()
+
