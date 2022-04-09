@@ -4,48 +4,39 @@ import json
 import subprocess
 import os
 import sys
+import copy
 
 
 @dataclass
 class Node:
-    node_id: int
+    id: int
     workspace_id: int
 
 
 @dataclass
 class NodeInfo:
-    current_node_id: int
-    current_workspace_id: int
+    curr_node: int
+    curr_workspace: int
     nodes: list
-    workspace_ids: list
+    workspaces: list
 
 
 def get_current_node_info(node_tree_dict):
-    node_info = NodeInfo(-1, -1, list(), list())
-    current_workspace_id = -1
-    node_trees = []
-    node_trees.append(node_tree_dict["nodes"])
-    workspace_nodes = []
-    for node_list in node_trees:
-        for node in node_list:
-            if node.get("num"):
-                node_info.workspace_ids.append(node["num"])
-                for workspace_node_list in [node["nodes"] + node["floating_nodes"]] :
-                    for work_node in workspace_node_list:
-                        if work_node.get("nodes"):
-                            workspace_node_list.append(work_node["nodes"])
-                        if work_node.get("floating_nodes"):
-                            workspace_node_list.append(work_node["floating_nodes"])
-
-                        if (work_node["focused"] == True):
-                            node_info.current_node_id = work_node["id"]
-                            node_info.current_workspace_id = node["num"]
-                        if work_node["type"] != "workspace":
-                            node_info.nodes.append(Node(work_node["id"], node["num"]))
-            if node.get("nodes"):
-                node_trees.append(node["nodes"])
-            if node.get("floating_nodes"):
-                node_trees.append(node["floating_nodes"])
+    node_info = NodeInfo(-1, -1, [], [])
+    all_nodes = node_tree_dict["nodes"]
+    for node in all_nodes:
+        if node.get("num"):
+            node_info.workspaces.append(node["num"])
+            workspace_nodes = node["nodes"] + node["floating_nodes"]
+            for ws_node in workspace_nodes:
+                node_info.nodes.append(Node(ws_node["id"], node["num"]))
+                if (ws_node["focused"] == True):
+                    node_info.curr_node = ws_node["id"]
+                    node_info.curr_workspace = node["num"]
+        if node.get("nodes"):
+            all_nodes += node["nodes"]
+        if node.get("floating_nodes"):
+            all_nodes += node["floating_nodes"]
     return node_info
 
 
@@ -56,41 +47,41 @@ def get_tree():
 
 def maximize():
     node_info = get_current_node_info(get_tree())
-    if node_info.current_workspace_id != node_info.workspace_ids[0]:
-        next_workspace = node_info.workspace_ids[0]
+    if node_info.curr_workspace != node_info.workspaces[0]:
+        next_workspace = node_info.workspaces[0]
     else:
-        next_workspace = node_info.workspace_ids[-1] + 1
+        next_workspace = node_info.workspaces[-1] + 1
 
-    cmd = "swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(node_info.current_node_id, next_workspace)
+    cmd = "swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(node_info.curr_node, next_workspace)
     os.system(cmd)
 
 
 def next_or_new_workspace():
     node_info = get_current_node_info(get_tree())
-    if node_info.current_workspace_id != -1:
-        if node_info.current_workspace_id == node_info.workspace_ids[-1]:
-            os.system("swaymsg workspace {0}".format(node_info.workspace_ids[-1] + 1))
+    if node_info.curr_workspace != -1:
+        if node_info.curr_workspace == node_info.workspaces[-1]:
+            os.system("swaymsg workspace {0}".format(node_info.workspaces[-1] + 1))
         else:
             os.system("swaymsg workspace next")
 
 
 def prev_workspace():
     node_info = get_current_node_info(get_tree())
-    if node_info.current_workspace_id != node_info.workspace_ids[0]:
+    if node_info.curr_workspace != node_info.workspaces[0]:
         os.system("swaymsg workspace prev")
 
 
 def next_node():
     node_info = get_current_node_info(get_tree())
-    nodes_on_ws = [i.node_id for i in node_info.nodes if i.workspace_id == node_info.current_workspace_id]
+    nodes_on_ws = [i.id for i in node_info.nodes if i.workspace_id == node_info.curr_workspace]
     if len(nodes_on_ws) < 2:
         return -1
 
     next_node = 0
-    if nodes_on_ws[-1] != node_info.current_node_id:
+    if nodes_on_ws[-1] != node_info.curr_node:
         for i in nodes_on_ws:
             next_node += 1
-            if i == node_info.current_node_id:
+            if i == node_info.curr_node:
                 break
     return nodes_on_ws[next_node]
 
