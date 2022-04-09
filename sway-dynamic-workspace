@@ -5,13 +5,18 @@ import subprocess
 import os
 import sys
 
+@dataclass
+class Node:
+    id: int
+    workspace: int
+
 
 @dataclass
 class NodeInfo:
     curr_node: int
     curr_workspace: int
-    visible_nodes: list
-    workspaces: list
+    nodes: list[Node]
+    workspaces: list[int]
 
 
 def get_current_node_info(node_tree_dict):
@@ -24,11 +29,10 @@ def get_current_node_info(node_tree_dict):
             node_info.workspaces.append(node["num"])
             for ws_node in workspace_nodes:
                 workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
-                if ws_node.get("visible"):
-                    node_info.visible_nodes.append(ws_node["id"])
-                    if ws_node["focused"]:
-                        node_info.curr_node = ws_node["id"]
-                        node_info.curr_workspace = node["num"]
+                node_info.nodes.append(Node(ws_node["id"], node["num"]))
+                if ws_node["focused"]:
+                    node_info.curr_node = ws_node["id"]
+                    node_info.curr_workspace = node["num"]
     return node_info
 
 
@@ -63,15 +67,16 @@ def prev_workspace():
 
 def next_node():
     node_info = get_current_node_info(get_tree())
-    if len(node_info.visible_nodes) < 2:
+    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_workspace]
+    if len(nodes) < 2:
         return -1
     next_node = 0
-    if node_info.visible_nodes[-1] != node_info.curr_node:
-        for i in node_info.visible_nodes:
+    if nodes[-1] != node_info.curr_node:
+        for i in nodes:
             next_node += 1
             if i == node_info.curr_node:
                 break
-    return node_info.visible_nodes[next_node]
+    return nodes[next_node]
 
 
 if __name__ == "__main__":
@@ -86,3 +91,4 @@ if __name__ == "__main__":
             os.system("swaymsg swap container with con_id {0}".format(next_node()))
     else:
         maximize()
+
