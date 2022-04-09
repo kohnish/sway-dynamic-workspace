@@ -30,7 +30,8 @@ def get_current_node_info(node_tree_dict):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             for ws_node in workspace_nodes:
                 workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
-                node_info.nodes.append(Node(ws_node["id"], node["num"]))
+                if ws_node.get("visible"):
+                    node_info.nodes.append(Node(ws_node["id"], node["num"]))
                 if ws_node["focused"]:
                     node_info.curr_node = ws_node["id"]
                     node_info.curr_workspace = node["num"]
@@ -72,6 +73,7 @@ def prev_workspace():
 
 def next_node():
     node_info = get_current_node_info(get_tree())
+    print(node_info)
     nodes_on_ws = [i.id for i in node_info.nodes if i.workspace_id == node_info.curr_workspace]
     if len(nodes_on_ws) < 2:
         return -1
@@ -97,4 +99,3 @@ if __name__ == "__main__":
             os.system("swaymsg swap container with con_id {}".format(next_node()))
     else:
         maximize()
-
