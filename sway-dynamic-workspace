@@ -7,16 +7,10 @@ import sys
 
 
 @dataclass
-class Node:
-    id: int
-    workspace_id: int
-
-
-@dataclass
 class NodeInfo:
     curr_node: int
     curr_workspace: int
-    nodes: list
+    visible_nodes: list
     workspaces: list
 
 
@@ -24,17 +18,17 @@ def get_current_node_info(node_tree_dict):
     node_info = NodeInfo(-1, -1, [], [])
     all_nodes = node_tree_dict["nodes"]
     for node in all_nodes:
+        all_nodes += node["nodes"] + node["floating_nodes"]
         if node.get("num"):
-            node_info.workspaces.append(node["num"])
             workspace_nodes = node["nodes"] + node["floating_nodes"]
+            node_info.workspaces.append(node["num"])
             for ws_node in workspace_nodes:
                 workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
                 if ws_node.get("visible"):
-                    node_info.nodes.append(Node(ws_node["id"], node["num"]))
+                    node_info.visible_nodes.append(ws_node["id"])
                     if ws_node["focused"]:
                         node_info.curr_node = ws_node["id"]
                         node_info.curr_workspace = node["num"]
-        all_nodes += node["nodes"] + node["floating_nodes"]
     return node_info
 
 
@@ -49,7 +43,6 @@ def maximize():
         next_workspace = node_info.workspaces[0]
     else:
         next_workspace = node_info.workspaces[-1] + 1
-
     os.system("swaymsg [con_id={0}] move container to workspace {1}, workspace {1}".format(node_info.curr_node, next_workspace))
 
 
@@ -70,17 +63,15 @@ def prev_workspace():
 
 def next_node():
     node_info = get_current_node_info(get_tree())
-    nodes_on_ws = [i.id for i in node_info.nodes if i.workspace_id == node_info.curr_workspace]
-    if len(nodes_on_ws) < 2:
+    if len(node_info.visible_nodes) < 2:
         return -1
-
     next_node = 0
-    if nodes_on_ws[-1] != node_info.curr_node:
-        for i in nodes_on_ws:
+    if node_info.visible_nodes[-1] != node_info.curr_node:
+        for i in node_info.visible_nodes:
             next_node += 1
             if i == node_info.curr_node:
                 break
-    return nodes_on_ws[next_node]
+    return node_info.visible_nodes[next_node]
 
 
 if __name__ == "__main__":
@@ -92,7 +83,6 @@ if __name__ == "__main__":
         elif sys.argv[1] == "toggle-focus":
             os.system("swaymsg [con_id={0}] focus".format(next_node()))
         elif sys.argv[1] == "swap":
-            os.system("swaymsg swap container with con_id {}".format(next_node()))
+            os.system("swaymsg swap container with con_id {0}".format(next_node()))
     else:
         maximize()
-

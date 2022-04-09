@@ -1,9 +1,8 @@
 # sway-dynamic-workspace
-Enable Gnome like dynamic workspace
+Enable Gnome like dynamic workspace and other minor tools to make sway behave like bspwm
 
 # ToDo
-1. Fix the mess
-2. Support multiple monitors
+1. Support multiple monitors
 
 # How to use
 1. Install sway-dynamic-workspace script in your $PATH.  
@@ -19,7 +18,7 @@ Enable Gnome like dynamic workspace
    e.g.  
    ```
    # Move current node to next dynamic workspace (maximize)
-   bindsym ctrl+shift+f exec sway-dynamic-workspace
+   bindsym $mod+f exec sway-dynamic-workspace
 
    # Disable cycling workspaces
    bindsym $mod+up exec sway-dynamic-workspace prev
