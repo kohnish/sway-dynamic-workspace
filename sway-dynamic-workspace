@@ -17,7 +17,7 @@ class Node:
 class NodeInfo:
     curr_node: int
     curr_workspace: int
-    nodes: list
+    nodes: list[Node]
     workspaces: list
 
 
