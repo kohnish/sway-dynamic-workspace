@@ -17,7 +17,7 @@ class Node:
 class NodeInfo:
     curr_node: int
     curr_workspace: int
-    nodes: list[Node]
+    nodes: list
     workspaces: list
 
 
@@ -29,14 +29,12 @@ def get_current_node_info(node_tree_dict):
             node_info.workspaces.append(node["num"])
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             for ws_node in workspace_nodes:
+                workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
                 node_info.nodes.append(Node(ws_node["id"], node["num"]))
-                if (ws_node["focused"] == True):
+                if ws_node["focused"]:
                     node_info.curr_node = ws_node["id"]
                     node_info.curr_workspace = node["num"]
-        if node.get("nodes"):
-            all_nodes += node["nodes"]
-        if node.get("floating_nodes"):
-            all_nodes += node["floating_nodes"]
+        all_nodes += node["nodes"] + node["floating_nodes"]
     return node_info
 
 
@@ -58,6 +56,7 @@ def maximize():
 
 def next_or_new_workspace():
     node_info = get_current_node_info(get_tree())
+    print(node_info)
     if node_info.curr_workspace != -1:
         if node_info.curr_workspace == node_info.workspaces[-1]:
             os.system("swaymsg workspace {0}".format(node_info.workspaces[-1] + 1))
