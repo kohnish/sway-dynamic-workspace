@@ -16,7 +16,7 @@ class Node:
 
 @dataclass
 class NodeInfo:
-    curr_node: int
+    curr_node: Node
     curr_workspace: int
     nodes: list[Node]
     workspaces: list[int]
@@ -34,17 +34,31 @@ def get_current_node_info(node_tree_dict):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             node_info.workspaces.append(node["num"])
             for ws_node in workspace_nodes:
-                #workspace_nodes = ws_node["nodes"] + ws_node["floating_nodes"]
                 node_info.nodes.append(Node(ws_node["id"], node["num"], ws_node["app_id"], False))
                 if ws_node["focused"]:
-                    node_info.curr_node = ws_node["id"]
+                    node_info.curr_node = ws_node
                     node_info.curr_workspace = node["num"]
     return node_info
+
+
+def toggle_maximize(node_info: NodeInfo, default_width, default_height, default_x, default_y, max_width, max_height):
+    if node_info.curr_node["rect"]["width"] == default_width and node_info.curr_node["rect"]["height"] == default_height:
+        os.system("swaymsg resize set {0} {1}, move position 0 0".format(max_width, max_height))
+    else:
+        os.system("swaymsg resize set {0} {1}, move position {2} {3}".format(default_width, default_height, default_x, default_y))
 
 
 def get_tree():
     json_str = subprocess.check_output(["swaymsg", "-t", "get_tree"])
     return json.loads(json_str)
+
+
+def maximize(node_info):
+    if node_info.curr_workspace != node_info.workspaces[0]:
+        next_workspace = node_info.workspaces[0]
+    else:
+        next_workspace = node_info.workspaces[-1] + 1
+    os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node["id"], next_workspace))
 
 
 def next_or_new_workspace(node_info):
@@ -65,10 +79,11 @@ def next_node(node_info):
     if len(nodes) < 2:
         return -1
     next_node = 0
-    if nodes[-1] != node_info.curr_node:
+    curr_node_id = node_info.curr_node["id"]
+    if nodes[-1] != curr_node_id:
         for i in nodes:
             next_node += 1
-            if i == node_info.curr_node:
+            if i == curr_node_id:
                 break
     return nodes[next_node]
 
@@ -98,6 +113,9 @@ if __name__ == "__main__":
     elif len(sys.argv) == 4:
         if sys.argv[1] == "toggle-hidden":
             toggle_hidden(node_info, sys.argv[2], sys.argv[3])
+    elif len(sys.argv) == 8:
+        if sys.argv[1] == "toggle-maximize":
+            toggle_maximize(node_info, int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]))
     else:
         maximize(node_info)
 
