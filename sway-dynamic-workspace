@@ -12,37 +12,38 @@ class Node:
     workspace: int
     name: str
     hidden: bool
+    width: int
+    height: int
 
 
 @dataclass
 class NodeInfo:
     curr_node: Node
-    curr_workspace: int
     nodes: list[Node]
     workspaces: list[int]
 
 
 def get_current_node_info(node_tree_dict):
-    node_info = NodeInfo(-1, -1, [], [])
+    node_info = NodeInfo(Node(-1, -1, "", False, -1, -1), [], [])
     all_nodes = node_tree_dict["nodes"]
     for node in all_nodes:
         if node["name"] == "__i3_scratch":
             for hidden_node in node["floating_nodes"] + node["nodes"]:
-                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_node["app_id"], True))
+                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_node["app_id"], True, node["rect"]["width"], node["rect"]["height"]))
         all_nodes += node["nodes"] + node["floating_nodes"]
         if node.get("num"):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             node_info.workspaces.append(node["num"])
             for ws_node in workspace_nodes:
-                node_info.nodes.append(Node(ws_node["id"], node["num"], ws_node["app_id"], False))
+                curr_node = Node(ws_node["id"], node["num"], ws_node["app_id"], False, ws_node["rect"]["width"], ws_node["rect"]["height"])
+                node_info.nodes.append(curr_node)
                 if ws_node["focused"]:
-                    node_info.curr_node = ws_node
-                    node_info.curr_workspace = node["num"]
+                    node_info.curr_node = curr_node
     return node_info
 
 
 def toggle_maximize(node_info: NodeInfo, default_width, default_height, default_x, default_y, max_width, max_height):
-    if node_info.curr_node["rect"]["width"] == default_width and node_info.curr_node["rect"]["height"] == default_height:
+    if node_info.curr_node.width == default_width and node_info.curr_node.height == default_height:
         os.system("swaymsg resize set {0} {1}, move position 0 0".format(max_width, max_height))
     else:
         os.system("swaymsg resize set {0} {1}, move position {2} {3}".format(default_width, default_height, default_x, default_y))
@@ -54,36 +55,36 @@ def get_tree():
 
 
 def maximize(node_info):
-    if node_info.curr_workspace != node_info.workspaces[0]:
+    if node_info.curr_node.workspace != node_info.workspaces[0]:
         next_workspace = node_info.workspaces[0]
     else:
         next_workspace = node_info.workspaces[-1] + 1
-    os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node["id"], next_workspace))
+    os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node.id, next_workspace))
 
 
 def next_or_new_workspace(node_info):
-    if node_info.curr_workspace != -1:
-        if node_info.curr_workspace == node_info.workspaces[-1]:
+    if node_info.curr_node.workspace != -1:
+        if node_info.curr_node.workspace == node_info.workspaces[-1]:
             os.system("swaymsg workspace {0}".format(node_info.workspaces[-1] + 1))
         else:
             os.system("swaymsg workspace next")
 
 
 def prev_workspace(node_info):
-    if node_info.curr_workspace != node_info.workspaces[0]:
+    if node_info.curr_node.workspace != node_info.workspaces[0]:
         os.system("swaymsg workspace prev")
 
 
-def next_node(node_info):
-    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_workspace]
+def next_node(node_info: NodeInfo):
+    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_node.workspace]
     if len(nodes) < 2:
         return -1
     next_node = 0
-    curr_node_id = node_info.curr_node["id"]
-    if nodes[-1] != curr_node_id:
+    curr_node_id = node_info.curr_node.id
+    if nodes[-1] != node_info.curr_node.id:
         for i in nodes:
             next_node += 1
-            if i == curr_node_id:
+            if i == node_info.curr_node.id:
                 break
     return nodes[next_node]
 
