@@ -54,7 +54,7 @@ def get_tree():
     return json.loads(json_str)
 
 
-def maximize(node_info):
+def move_to_new_workspace(node_info):
     if node_info.curr_node.workspace != node_info.workspaces[0]:
         next_workspace = node_info.workspaces[0]
     else:
@@ -118,5 +118,5 @@ if __name__ == "__main__":
         if sys.argv[1] == "toggle-maximize":
             toggle_maximize(node_info, int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]))
     else:
-        maximize(node_info)
+        move_to_new_workspace(node_info)
 
