@@ -35,10 +35,17 @@ def get_current_node_info(node_tree_dict):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             node_info.workspaces.append(node["num"])
             for ws_node in workspace_nodes:
-                curr_node = Node(ws_node["id"], node["num"], ws_node["app_id"], False, ws_node["rect"]["width"], ws_node["rect"]["height"])
-                node_info.nodes.append(curr_node)
-                if ws_node["focused"]:
-                    node_info.curr_node = curr_node
+                app_id = ""
+                if ws_node.get("app_id"):
+                    app_id = ws_node["app_id"]
+                elif ws_node.get("window_properties"):
+                    app_id = ws_node["window_properties"]["class"]
+
+                if app_id != "":
+                    curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
+                    node_info.nodes.append(curr_node)
+                    if ws_node["focused"]:
+                        node_info.curr_node = curr_node
     return node_info
 
 
