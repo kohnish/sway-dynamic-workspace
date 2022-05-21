@@ -15,12 +15,17 @@ class Node:
     width: int
     height: int
 
+@dataclass
+class Workspace:
+    id: int
+    nodes: list[Node]
+
 
 @dataclass
 class NodeInfo:
     curr_node: Node
     nodes: list[Node]
-    workspaces: list[int]
+    workspaces: list[Workspace]
 
 
 def get_current_node_info(node_tree_dict):
@@ -33,7 +38,8 @@ def get_current_node_info(node_tree_dict):
         all_nodes += node["nodes"] + node["floating_nodes"]
         if node.get("num"):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
-            node_info.workspaces.append(node["num"])
+            current_nodes_list = list()
+            node_info.workspaces.append(Workspace(node["num"], current_nodes_list))
             for ws_node in workspace_nodes:
                 app_id = ""
                 if ws_node.get("app_id"):
@@ -44,6 +50,7 @@ def get_current_node_info(node_tree_dict):
                 if app_id != "":
                     curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
                     node_info.nodes.append(curr_node)
+                    current_nodes_list.append(curr_node)
                     if ws_node["focused"]:
                         node_info.curr_node = curr_node
     return node_info
@@ -61,24 +68,49 @@ def get_tree():
     return json.loads(json_str)
 
 
-def move_to_new_workspace(node_info):
-    if node_info.curr_node.workspace != node_info.workspaces[0]:
-        next_workspace = node_info.workspaces[0]
+def find_empty_workspace(node_info):
+    fake_empty_workspaces = list()
+    if len(node_info.workspaces) == 1:
+        return 2
+    for ws in node_info.workspaces:
+        blank_nodes = list()
+        non_blank_nodes = list()
+        for node in ws.nodes:
+            if node.name == "blank":
+                blank_nodes.append(node)
+            elif node.hidden == False:
+                non_blank_nodes.append(node)
+        if len(blank_nodes) > 0 and len(non_blank_nodes) == 0:
+            fake_empty_workspaces.append(ws)
+    if len(fake_empty_workspaces) > 0:
+        return fake_empty_workspaces[0].id
     else:
-        next_workspace = node_info.workspaces[-1] + 1
+        return node_info.workspaces[-1] + 1
+
+
+def move_to_new_workspace(node_info):
+    if node_info.curr_node.name == "blank":
+        return
+    workspaces = [i.id for i in node_info.workspaces]
+    if node_info.curr_node.workspace != workspaces[0]:
+        next_workspace = workspaces[0]
+    else:
+        next_workspace = find_empty_workspace(node_info)
     os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node.id, next_workspace))
 
 
 def next_or_new_workspace(node_info):
+    workspaces = [i.id for i in node_info.workspaces]
     if node_info.curr_node.workspace != -1:
-        if node_info.curr_node.workspace == node_info.workspaces[-1]:
-            os.system("swaymsg workspace {0}".format(node_info.workspaces[-1] + 1))
+        if node_info.curr_node.workspace == workspaces[-1]:
+            os.system("swaymsg workspace {0}".format(workspaces[-1] + 1))
         else:
             os.system("swaymsg workspace next")
 
 
 def prev_workspace(node_info):
-    if node_info.curr_node.workspace != node_info.workspaces[0]:
+    workspaces = [i.id for i in node_info.workspaces]
+    if node_info.curr_node.workspace != workspaces[0]:
         os.system("swaymsg workspace prev")
 
 
@@ -107,6 +139,34 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
             os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
 
 
+def keep_minimum_workspaces(node_info: NodeInfo, msg, min_ws):
+    action = msg["change"]
+    if action != "new" and action != "move" and action != "close" or msg["container"]["app_id"] == "blank":
+        return
+    fake_empty_workspaces = list()
+    for ws in node_info.workspaces:
+        blank_nodes = list()
+        non_blank_nodes = list()
+        for node in ws.nodes:
+            if node.name == "blank":
+                blank_nodes.append(node)
+            elif node.hidden == False:
+                non_blank_nodes.append(node)
+        if len(blank_nodes) > 0 and len(non_blank_nodes) == 0:
+            fake_empty_workspaces.append(ws)
+
+    if len(fake_empty_workspaces) < min_ws:
+        os.system("swaymsg workspace {0}, exec hello-wayland".format(node_info.workspaces[-1].id + 1))
+        os.system("swaymsg workspace {0}".format(node_info.curr_node.workspace))
+    elif len(fake_empty_workspaces) > min_ws:
+        counter = 0
+        for empty_ws in fake_empty_workspaces:
+            if counter >= min_ws:
+                for empty_node in empty_ws.nodes:
+                    os.system("swaymsg [con_id={0}] kill".format(empty_node.id))
+            counter = counter + 1
+
+
 if __name__ == "__main__":
     node_info = get_current_node_info(get_tree())
     if len(sys.argv) == 2:
@@ -118,6 +178,9 @@ if __name__ == "__main__":
             os.system("swaymsg '[con_id={0}]' focus".format(next_node(node_info)))
         elif sys.argv[1] == "swap":
             os.system("swaymsg swap container with con_id {0}".format(next_node(node_info)))
+        elif sys.argv[1] == "keep-workspace":
+            msg = json.loads(sys.stdin.readlines()[0])
+            keep_minimum_workspaces(node_info, msg, 1)
     elif len(sys.argv) == 4:
         if sys.argv[1] == "toggle-hidden":
             toggle_hidden(node_info, sys.argv[2], sys.argv[3])
@@ -126,3 +189,5 @@ if __name__ == "__main__":
             toggle_maximize(node_info, int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]))
     else:
         move_to_new_workspace(node_info)
+
+
