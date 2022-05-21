@@ -1,0 +1,22 @@
+#!/bin/sh
+
+direction=$1
+size=$2
+
+if [[ $direction == left ]]; then
+    if sway resize grow left $size | fgrep -q Cannot; then
+        sway resize shrink right $size
+    fi
+elif [[ $direction == right ]]; then
+    if sway resize grow right $size | fgrep -q Cannot; then
+        sway resize shrink left $size
+    fi
+elif [[ $direction == up ]]; then
+    if sway resize grow up $size | fgrep -q Cannot; then
+        sway resize shrink down $size
+    fi
+elif [[ $direction == down ]]; then
+    if sway resize grow down $size | fgrep -q Cannot; then
+        sway resize shrink up $size
+    fi
+fi
