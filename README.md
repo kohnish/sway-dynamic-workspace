@@ -9,12 +9,17 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    
    e.g. 
    ```
-   curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-dynamic-workspace -o ~/bin/
+   git clone https://github.com/kohnish/sway-dynamic-workspace.git
+   cd sway-dynamic-workspace
+   cp sway-dynamic-workspace -o ~/bin/
    chmod +x ~/bin/sway-dynamic-workspace
-   curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-keep-workspace -o ~/bin/
+   cp sway-keep-workspace -o ~/bin/
    chmod +x ~/bin/sway-keep-workspace
-   curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-resize -o ~/bin/
+   cp sway-resize -o ~/bin/
    chmod +x ~/bin/sway-resize
+   cd hello-wayland
+   make
+   cp hello-wayland ~/bin/
    ```
 
 2. Configure key binding in the sway config.  
@@ -43,9 +48,9 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    bindsym f12 exec sway-dynamic-workspace toggle-hidden alacritty_quake 'TERM_PROGRAM=alacritty_quake alacritty --class=alacritty_quake --detach'
    bindsym f11 exec $toggle_maximize_cmd
 
-    # Resize nodes
-    bindsym ctrl+shift+h exec sway-resize left 1
-    bindsym ctrl+shift+l exec sway-resize right 1
-    bindsym ctrl+shift+j exec sway-resize down 1
-    bindsym ctrl+shift+k exec sway-resize up 1
+   # Resize nodes
+   bindsym ctrl+shift+h exec sway-resize left 1
+   bindsym ctrl+shift+l exec sway-resize right 1
+   bindsym ctrl+shift+j exec sway-resize down 1
+   bindsym ctrl+shift+k exec sway-resize up 1
    ```
