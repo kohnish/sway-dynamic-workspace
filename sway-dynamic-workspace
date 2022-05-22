@@ -173,7 +173,7 @@ if __name__ == "__main__":
             stdin = sys.stdin.readlines()[0]
             msg = json.loads(stdin)
             action = msg["change"]
-            if action in ["new", "focus"] and msg["container"]["app_id"] != "blank":
+            if action == "focus" and msg["container"]["app_id"] != "blank":
                 keep_minimum_workspaces(get_nodes(), 1)
         elif sys.argv[1] == "next":
             next_or_new_workspace(get_nodes())
