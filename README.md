@@ -3,6 +3,7 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
 
 # ToDo
 1. Support multiple monitors
+2. Rewrite fully in C
 
 # How to use
 1. Install sway-dynamic-workspace script in your $PATH.  
