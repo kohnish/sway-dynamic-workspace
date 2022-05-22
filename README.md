@@ -1,5 +1,5 @@
 # sway-dynamic-workspace
-Enable Gnome like dynamic workspace and other minor tools to make sway behave like bspwm
+Enable dynamic workspace and empty workspace for sway like gnome and bspwm
 
 # ToDo
 1. Support multiple monitors
@@ -11,12 +11,19 @@ Enable Gnome like dynamic workspace and other minor tools to make sway behave li
    ```
    curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-dynamic-workspace -o ~/bin/
    chmod +x ~/bin/sway-dynamic-workspace
+   curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-keep-workspace -o ~/bin/
+   chmod +x ~/bin/sway-keep-workspace
+   curl -L https://github.com/kohnish/sway-dynamic-workspace/blob/master/sway-resize -o ~/bin/
+   chmod +x ~/bin/sway-resize
    ```
 
 2. Configure key binding in the sway config.  
    
    e.g.  
    ```
+   # Always keep one empty workspace (requires executable called hello-wayland(blank dot gui process) in the PATH)
+   exec sway-keep-workspace
+
    # Move current node to next dynamic workspace (maximize)
    bindsym $mod+f exec sway-dynamic-workspace
 
@@ -30,10 +37,15 @@ Enable Gnome like dynamic workspace and other minor tools to make sway behave li
    # Toggle swap windows within a workspace
    bindsym $mod+s exec sway-dynamic-workspace swap
 
-   # Enable quake mode with kitty (needs remember_window_size no in kitty.conf)
+   # Enable quake mode with alacritty
    set $toggle_maximize_cmd sway-dynamic-workspace toggle-maximize 3440 700 0 0 3440 1408
-   for_window [app_id="kitty_quake"] floating enable, sticky enable, exec $toggle_maximize_cmd
-   bindsym f12 exec sway-dynamic-workspace toggle-hidden kitty_quake 'TERM_PROGRAM=kitty_quake kitty --class=kitty_quake --detach'
+   for_window [app_id="alacritty_quake"] floating enable, sticky enable, exec $toggle_maximize_cmd
+   bindsym f12 exec sway-dynamic-workspace toggle-hidden alacritty_quake 'TERM_PROGRAM=alacritty_quake alacritty --class=alacritty_quake --detach'
    bindsym f11 exec $toggle_maximize_cmd
 
+    # Resize nodes
+    bindsym ctrl+shift+h exec sway-resize left 1
+    bindsym ctrl+shift+l exec sway-resize right 1
+    bindsym ctrl+shift+j exec sway-resize down 1
+    bindsym ctrl+shift+k exec sway-resize up 1
    ```
