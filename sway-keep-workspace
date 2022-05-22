@@ -6,4 +6,4 @@ cleanup() {
 
 trap cleanup INT TERM
 
-swaymsg -t subscribe -m '[ "window" ]' | while read line ; do echo -n "$line" | sway-dynamic-workspace keep-workspace ; done
+swaymsg -t subscribe -m '[ "window" ]' | while read line ; do echo -n "$line" | sway-dynamic-workspace stdin ; done
