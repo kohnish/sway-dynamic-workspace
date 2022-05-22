@@ -47,12 +47,11 @@ def dict_to_node_info(node_tree_dict):
                 elif ws_node.get("window_properties"):
                     app_id = ws_node["window_properties"]["class"]
 
-                if app_id != "":
-                    curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
-                    node_info.nodes.append(curr_node)
-                    current_nodes_list.append(curr_node)
-                    if ws_node["focused"]:
-                        node_info.curr_node = curr_node
+                curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
+                node_info.nodes.append(curr_node)
+                current_nodes_list.append(curr_node)
+                if ws_node["focused"]:
+                    node_info.curr_node = curr_node
     return node_info
 
 
@@ -70,6 +69,7 @@ def get_tree():
 
 def get_nodes():
     return dict_to_node_info(get_tree())
+
 
 def find_empty_workspace(node_info):
     fake_empty_workspaces = list()
@@ -104,11 +104,10 @@ def move_to_new_workspace(node_info):
 
 def next_or_new_workspace(node_info):
     workspaces = [i.id for i in node_info.workspaces]
-    if node_info.curr_node.workspace != -1:
-        if node_info.curr_node.workspace == workspaces[-1]:
-            os.system("swaymsg workspace {0}".format(workspaces[-1] + 1))
-        else:
-            os.system("swaymsg workspace next")
+    if node_info.curr_node.workspace != -1 and node_info.curr_node.workspace != workspaces[-1]:
+        os.system("swaymsg workspace next")
+        return
+    os.system("swaymsg workspace {0}".format(workspaces[-1] + 1))
 
 
 def prev_workspace(node_info):
@@ -170,11 +169,11 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc == 2:
-        if sys.argv[1] == "keep-workspace":
+        if sys.argv[1] == "stdin":
             stdin = sys.stdin.readlines()[0]
             msg = json.loads(stdin)
             action = msg["change"]
-            if action in ["new", "move", "close"] and msg["container"]["app_id"] != "blank":
+            if action in ["new", "focus"] and msg["container"]["app_id"] != "blank":
                 keep_minimum_workspaces(get_nodes(), 1)
         elif sys.argv[1] == "next":
             next_or_new_workspace(get_nodes())
