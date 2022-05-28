@@ -162,7 +162,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
         for empty_ws in fake_empty_workspaces:
             if counter >= min_ws:
                 for empty_node in empty_ws.nodes:
-                    os.system("swaymsg [con_id={0}] kill".format(empty_node.id))
+                    os.system("swaymsg '[con_id={0}]' kill".format(empty_node.id))
             counter = counter + 1
 
 
