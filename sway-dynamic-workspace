@@ -144,9 +144,9 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
     else:
         if target_node[0].hidden:
             os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
-            os.system("swaymsg '[con_id={0}]' floating disable".format(target_node[0].id))
-        elif node_info.curr_node.workspace != target_node[0].workspace:
-            os.system("swaymsg workspace {0}".format(target_node[0].workspace))
+        #     os.system("swaymsg '[con_id={0}]' floating disable".format(target_node[0].id))
+        # elif node_info.curr_node.workspace != target_node[0].workspace:
+        #     os.system("swaymsg workspace {0}".format(target_node[0].workspace))
         else:
             os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
 
