@@ -34,7 +34,12 @@ def dict_to_node_info(node_tree_dict):
     for node in all_nodes:
         if node["name"] == "__i3_scratch":
             for hidden_node in node["floating_nodes"] + node["nodes"]:
-                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_node["app_id"], True, hidden_node["rect"]["width"], hidden_node["rect"]["height"]))
+                hidden_app_name = ""
+                if hidden_node.get("app_id"):
+                    hidden_app_name = hidden_node["app_id"]
+                elif hidden_node.get("window_properties"):
+                    hidden_app_name = hidden_node["window_properties"]["class"]
+                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_app_name, True, hidden_node["rect"]["width"], hidden_node["rect"]["height"]))
         all_nodes += node["nodes"] + node["floating_nodes"]
         if node.get("num"):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
@@ -48,6 +53,8 @@ def dict_to_node_info(node_tree_dict):
                     app_id = ws_node["window_properties"]["class"]
 
                 curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
+                if app_id == "blank":
+                    os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
                 node_info.nodes.append(curr_node)
                 current_nodes_list.append(curr_node)
                 if ws_node["focused"]:
@@ -117,7 +124,7 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_node.workspace]
+    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_node.workspace and i.name != "blank"]
     if len(nodes) < 2:
         return -1
     next_node = 0
@@ -137,6 +144,9 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
     else:
         if target_node[0].hidden:
             os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
+            os.system("swaymsg '[con_id={0}]' floating disable".format(target_node[0].id))
+        elif node_info.curr_node.workspace != target_node[0].workspace:
+            os.system("swaymsg workspace {0}".format(target_node[0].workspace))
         else:
             os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
 
