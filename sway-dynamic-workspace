@@ -14,6 +14,10 @@ class Node:
     hidden: bool
     width: int
     height: int
+    max_width: int
+    max_height: int
+    pos_y: int
+    floating: bool
 
 @dataclass
 class Workspace:
@@ -29,8 +33,10 @@ class NodeInfo:
 
 
 def dict_to_node_info(node_tree_dict):
-    node_info = NodeInfo(Node(-1, -1, "", False, -1, -1), [], [])
+    node_info = NodeInfo(Node(-1, -1, "", False, -1, -1, -1, -1, -1, False), [], [])
     all_nodes = node_tree_dict["nodes"]
+    max_width = 0
+    max_height = 0
     for node in all_nodes:
         if node["name"] == "__i3_scratch":
             for hidden_node in node["floating_nodes"] + node["nodes"]:
@@ -39,8 +45,12 @@ def dict_to_node_info(node_tree_dict):
                     hidden_app_name = hidden_node["app_id"]
                 elif hidden_node.get("window_properties"):
                     hidden_app_name = hidden_node["window_properties"]["class"]
-                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_app_name, True, hidden_node["rect"]["width"], hidden_node["rect"]["height"]))
+                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_app_name, True, hidden_node["rect"]["width"], hidden_node["rect"]["height"], -1, -1, -1, False))
         all_nodes += node["nodes"] + node["floating_nodes"]
+        current_mode = node.get("current_mode")
+        if current_mode:
+            max_width = current_mode["width"]
+            max_height = current_mode["height"]
         if node.get("num"):
             workspace_nodes = node["nodes"] + node["floating_nodes"]
             current_nodes_list = list()
@@ -52,7 +62,8 @@ def dict_to_node_info(node_tree_dict):
                 elif ws_node.get("window_properties"):
                     app_id = ws_node["window_properties"]["class"]
 
-                curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"])
+
+                curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"], max_width, max_height, ws_node["rect"]["y"], ws_node["floating"] == "user_on")
                 if app_id == "blank":
                     os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
                 node_info.nodes.append(curr_node)
@@ -62,9 +73,11 @@ def dict_to_node_info(node_tree_dict):
     return node_info
 
 
-def toggle_maximize(node_info: NodeInfo, default_width, default_height, default_x, default_y, max_width, max_height):
+def toggle_maximize(node_info: NodeInfo, default_width, default_height, default_x, default_y):
+    default_width = node_info.curr_node.max_width
+    default_height = int(node_info.curr_node.max_height / 2)
     if node_info.curr_node.width == default_width and node_info.curr_node.height == default_height:
-        os.system("swaymsg resize set {0} {1}, move position 0 0".format(max_width, max_height))
+        os.system("swaymsg resize set {0} {1}, move position 0 0".format(node_info.curr_node.max_width, node_info.curr_node.max_height - node_info.curr_node.pos_y))
     else:
         os.system("swaymsg resize set {0} {1}, move position {2} {3}".format(default_width, default_height, default_x, default_y))
 
@@ -124,12 +137,12 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_node.workspace and i.name != "blank"]
+    nodes = [i.id for i in node_info.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
     if len(nodes) < 2:
         return -1
     next_node = 0
     curr_node_id = node_info.curr_node.id
-    if nodes[-1] != node_info.curr_node.id:
+    if nodes[-1] != node_info.curr_node.id and node_info.curr_node.name != "blank":
         for i in nodes:
             next_node += 1
             if i == node_info.curr_node.id:
@@ -178,7 +191,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
 
 if __name__ == "__main__":
     argc = len(sys.argv)
-    if argc == 2:
+    if argc >= 2:
         if sys.argv[1] == "stdin":
             stdin = sys.stdin.readlines()[0]
             msg = json.loads(stdin)
@@ -193,11 +206,9 @@ if __name__ == "__main__":
             os.system("swaymsg '[con_id={0}]' focus".format(next_node(get_nodes())))
         elif sys.argv[1] == "swap":
             os.system("swaymsg swap container with con_id {0}".format(next_node(get_nodes())))
-    elif argc == 4:
-        if sys.argv[1] == "toggle-hidden":
+        elif sys.argv[1] == "toggle-hidden":
             toggle_hidden(get_nodes(), sys.argv[2], sys.argv[3])
-    elif argc == 8:
-        if sys.argv[1] == "toggle-maximize":
-            toggle_maximize(get_nodes(), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6]), int(sys.argv[7]))
+        elif sys.argv[1] == "toggle-maximize":
+            toggle_maximize(get_nodes(), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]))
     else:
         move_to_new_workspace(get_nodes())
