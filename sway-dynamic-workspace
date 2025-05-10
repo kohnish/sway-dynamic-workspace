@@ -62,7 +62,6 @@ def dict_to_node_info(node_tree_dict):
                 elif ws_node.get("window_properties"):
                     app_id = ws_node["window_properties"]["class"]
 
-
                 curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"], max_width, max_height, ws_node["rect"]["y"], ws_node["floating"] == "user_on")
                 if app_id == "blank":
                     os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
@@ -138,8 +137,6 @@ def prev_workspace(node_info):
 
 def next_node(node_info: NodeInfo):
     nodes = [i.id for i in node_info.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
-    if len(nodes) < 2:
-        return -1
     next_node = 0
     curr_node_id = node_info.curr_node.id
     if nodes[-1] != node_info.curr_node.id and node_info.curr_node.name != "blank":
@@ -157,9 +154,6 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
     else:
         if target_node[0].hidden:
             os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
-        #     os.system("swaymsg '[con_id={0}]' floating disable".format(target_node[0].id))
-        # elif node_info.curr_node.workspace != target_node[0].workspace:
-        #     os.system("swaymsg workspace {0}".format(target_node[0].workspace))
         else:
             os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
 
