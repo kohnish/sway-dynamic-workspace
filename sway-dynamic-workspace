@@ -74,9 +74,6 @@ def dict_to_node_info(node_tree_dict):
 
 
 def toggle_maximize(node_info: NodeInfo, default_width, default_height, default_x, default_y):
-    if not node_info.curr_node.floating:
-        os.system("swaymsg fullscreen")
-        return
     default_width = node_info.curr_node.max_width
     default_height = int(node_info.curr_node.max_height / 2)
     if node_info.curr_node.width == default_width and node_info.curr_node.height == default_height:
