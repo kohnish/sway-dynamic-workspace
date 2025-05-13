@@ -57,6 +57,7 @@ def dict_to_node_info(node_tree_dict):
             current_nodes_list = list()
             node_info.workspaces.append(Workspace(node["num"], current_nodes_list))
             for ws_node in workspace_nodes:
+                workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
                 app_id = ""
                 if ws_node.get("app_id"):
                     app_id = ws_node["app_id"]
