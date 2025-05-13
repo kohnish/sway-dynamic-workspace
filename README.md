@@ -8,7 +8,7 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
 # How to use
 1. Install sway-dynamic-workspace script in your $PATH.  
    
-   e.g. 
+   e.g. in case of ~/bin
    ```
    git clone https://github.com/kohnish/sway-dynamic-workspace.git
    cd sway-dynamic-workspace
@@ -19,6 +19,7 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    cp sway-resize ~/bin/
    chmod +x ~/bin/sway-resize
    cd hello-wayland
+   sudo dnf install -y wayland-devel wayland-protocols-devel ImageMagick-devel
    make
    cp hello-wayland ~/bin/
    ```
@@ -27,17 +28,17 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    
    e.g.  
    ```
-   # Always keep one empty workspace (requires executable called hello-wayland(blank dot gui process) in the PATH)
+   # A daemon to keep one empty workspace (requires executable called hello-wayland(blank dot gui process) in the PATH)
    exec sway-keep-workspace
 
    # Move current node to next dynamic workspace (maximize)
    bindsym $mod+f exec sway-dynamic-workspace
 
-   # Disable cycling workspaces
+   # Next or prev workspace to avoid the default cycling behaviour
    bindsym $mod+up exec sway-dynamic-workspace prev
    bindsym $mod+down exec sway-dynamic-workspace next
 
-   # Toggle focus
+   # Toggle focus to a next window across workspaces
    bindsym $mod+tab exec sway-dynamic-workspace toggle-focus
 
    # Toggle swap windows within a workspace
