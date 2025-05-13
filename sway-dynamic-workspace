@@ -138,9 +138,7 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    if node_info.curr_node.name == "blank":
-        return
-    if node_info.curr_node.floating:
+    if node_info.curr_node.floating and node_info.curr_node.name != "blank":
         os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
         return
     nodes = [i.id for i in node_info.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
