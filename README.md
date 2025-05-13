@@ -12,11 +12,11 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    ```
    git clone https://github.com/kohnish/sway-dynamic-workspace.git
    cd sway-dynamic-workspace
-   cp sway-dynamic-workspace -o ~/bin/
+   cp sway-dynamic-workspace ~/bin/
    chmod +x ~/bin/sway-dynamic-workspace
-   cp sway-keep-workspace -o ~/bin/
+   cp sway-keep-workspace ~/bin/
    chmod +x ~/bin/sway-keep-workspace
-   cp sway-resize -o ~/bin/
+   cp sway-resize ~/bin/
    chmod +x ~/bin/sway-resize
    cd hello-wayland
    make
@@ -37,7 +37,7 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    bindsym $mod+up exec sway-dynamic-workspace prev
    bindsym $mod+down exec sway-dynamic-workspace next
 
-   # Toggle focus within a workspace
+   # Toggle focus
    bindsym $mod+tab exec sway-dynamic-workspace toggle-focus
 
    # Toggle swap windows within a workspace

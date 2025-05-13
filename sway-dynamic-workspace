@@ -137,12 +137,31 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    if (node_info.curr_node.floating):
+    if node_info.curr_node.name == "blank":
+        return
+    if node_info.curr_node.floating:
         os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        return
     nodes = [i.id for i in node_info.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
     next_node = 0
     curr_node_id = node_info.curr_node.id
     if nodes[-1] != node_info.curr_node.id and node_info.curr_node.name != "blank":
+        for i in nodes:
+            next_node += 1
+            if i == node_info.curr_node.id:
+                break
+    return nodes[next_node]
+
+
+def next_node_in_the_same_workspace(node_info: NodeInfo):
+    if node_info.curr_node.floating or node_info.curr_node.name == "blank":
+        return
+    nodes = [i.id for i in node_info.nodes if i.workspace == node_info.curr_node.workspace and i.name != "blank"]
+    if len(nodes) < 2:
+        return -1
+    next_node = 0
+    curr_node_id = node_info.curr_node.id
+    if nodes[-1] != node_info.curr_node.id:
         for i in nodes:
             next_node += 1
             if i == node_info.curr_node.id:
@@ -202,7 +221,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == "toggle-focus":
             os.system("swaymsg '[con_id={0}]' focus".format(next_node(get_nodes())))
         elif sys.argv[1] == "swap":
-            os.system("swaymsg swap container with con_id {0}".format(next_node(get_nodes())))
+            os.system("swaymsg swap container with con_id {0}".format(next_node_in_the_same_workspace(get_nodes())))
         elif sys.argv[1] == "toggle-hidden":
             toggle_hidden(get_nodes(), sys.argv[2], sys.argv[3])
         elif sys.argv[1] == "toggle-maximize":
