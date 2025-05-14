@@ -5,6 +5,7 @@ import subprocess
 import os
 import sys
 
+DEBUG = True
 
 @dataclass
 class Node:
@@ -31,6 +32,12 @@ class NodeInfo:
     curr_node: Node
     nodes: list[Node]
     workspaces: list[Workspace]
+
+
+def assertion_error(msg):
+    os.system("logger sway-dynamic-workspace: crashed with {0}".format(msg))
+    if DEBUG:
+        raise AssertionError
 
 
 def dict_to_node_info(node_tree_dict):
@@ -71,6 +78,8 @@ def dict_to_node_info(node_tree_dict):
                 current_nodes_list.append(curr_node)
                 if ws_node["focused"]:
                     node_info.curr_node = curr_node
+    if node_info.curr_node.id == -1:
+        assertion_error("Parse error: {0}".foramt(node_tree_dict))
     return node_info
 
 
