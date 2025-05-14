@@ -130,6 +130,9 @@ def move_to_new_workspace(node_info):
 
 
 def next_or_new_workspace(node_info):
+    nodes = [i for i in node_info.nodes if i.workspace == node_info.curr_node.workspace]
+    if len(nodes) == 1 and nodes[0].name == "blank":
+        return
     workspaces = [i.id for i in node_info.workspaces]
     if node_info.curr_node.workspace != -1 and node_info.curr_node.workspace != workspaces[-1]:
         os.system("swaymsg workspace next")
