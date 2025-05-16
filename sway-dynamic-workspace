@@ -39,44 +39,65 @@ def debug_log(msg):
         os.system("logger sway-dynamic-workspace: DEBUG: {0}".format(msg))
 
 
+def app_name_from_node(node):
+    app_name = ""
+    if node.get("app_id"):
+        app_name = node["app_id"]
+    elif node.get("window_properties"):
+        app_name = node["window_properties"]["class"]
+    assert app_name != ""
+    return app_name
+
+
+def create_node(node, workspace_id=-1, max_width=-1, max_height=-1):
+    app_name = app_name_from_node(node)
+    node_id = node["id"]
+    width = node["rect"]["width"]
+    height = node["rect"]["height"]
+    if workspace_id == -1:
+        return Node(node_id, -1, app_name, True, width, height, -1, -1, -1, False)
+    else:
+        y = node["rect"]["y"]
+        floating = node["floating"] == "user_on"
+        return Node(node_id, workspace_id, app_name, False, width, height, max_width, max_height, y, floating)
+
+
+def get_nested_nodes(node):
+    return node["floating_nodes"] + node["nodes"]
+
+
 def dict_to_node_info(node_tree_dict):
     node_info = NodeInfo(Node(-1, -1, "", False, -1, -1, -1, -1, -1, False), [], [])
     all_nodes = node_tree_dict["nodes"]
-    max_width = 0
-    max_height = 0
+    max_width = -1
+    max_height = -1
     for node in all_nodes:
         if node["name"] == "__i3_scratch":
-            for hidden_node in node["floating_nodes"] + node["nodes"]:
-                hidden_app_name = ""
-                if hidden_node.get("app_id"):
-                    hidden_app_name = hidden_node["app_id"]
-                elif hidden_node.get("window_properties"):
-                    hidden_app_name = hidden_node["window_properties"]["class"]
-                node_info.nodes.append(Node(hidden_node["id"], -1, hidden_app_name, True, hidden_node["rect"]["width"], hidden_node["rect"]["height"], -1, -1, -1, False))
-        all_nodes += node["nodes"] + node["floating_nodes"]
+            for hidden_node in get_nested_nodes(node):
+                node_info.nodes.append(create_node(hidden_node))
+            continue
+        workspace_nodes = get_nested_nodes(node)
+        all_nodes += workspace_nodes
         current_mode = node.get("current_mode")
         if current_mode:
             max_width = current_mode["width"]
             max_height = current_mode["height"]
-        if node.get("num"):
-            workspace_nodes = node["nodes"] + node["floating_nodes"]
-            current_nodes_list = list()
-            node_info.workspaces.append(Workspace(node["num"], current_nodes_list))
-            for ws_node in workspace_nodes:
-                workspace_nodes += ws_node["nodes"] + ws_node["floating_nodes"]
-                app_id = ""
-                if ws_node.get("app_id"):
-                    app_id = ws_node["app_id"]
-                elif ws_node.get("window_properties"):
-                    app_id = ws_node["window_properties"]["class"]
-
-                curr_node = Node(ws_node["id"], node["num"], app_id, False, ws_node["rect"]["width"], ws_node["rect"]["height"], max_width, max_height, ws_node["rect"]["y"], ws_node["floating"] == "user_on")
-                if app_id == "blank":
-                    os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
-                node_info.nodes.append(curr_node)
-                current_nodes_list.append(curr_node)
-                if ws_node["focused"]:
-                    node_info.curr_node = curr_node
+            continue
+        workspace_id = node.get("num")
+        if not workspace_id:
+            continue
+        nodes_in_ws = list()
+        node_info.workspaces.append(Workspace(workspace_id, nodes_in_ws))
+        for ws_node in workspace_nodes:
+            assert max_height != -1 and max_width != -1 and workspace_id != -1
+            workspace_nodes += get_nested_nodes(ws_node)
+            curr_node = create_node(ws_node, workspace_id, max_width, max_height)
+            if curr_node.name == "blank":
+                os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
+            node_info.nodes.append(curr_node)
+            nodes_in_ws.append(curr_node)
+            if ws_node["focused"]:
+                node_info.curr_node = curr_node
     return node_info
 
 
