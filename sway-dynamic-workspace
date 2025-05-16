@@ -162,8 +162,8 @@ def move_to_new_workspace(node_info):
 
 
 def next_workspace(node_info):
-    nodes = node_info.curr_node.workspace.nodes
-    if len(nodes) < 2:
+    nodes = node_info.curr_node.workspace.tiled_nodes
+    if len(nodes) == 0:
         return
     last_workspace = node_info.workspaces[-1]
     if node_info.curr_node.workspace != -1 and node_info.curr_node.workspace != last_workspace.id:
