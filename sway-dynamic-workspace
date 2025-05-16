@@ -22,18 +22,21 @@ class Node:
     max_height: int
     pos_y: int
     floating: bool
+    tiled: bool
 
 
 @dataclass
 class Workspace:
     id: int
     nodes: list[Node]
+    tiled_nodes: list[Node]
 
 
 @dataclass
 class NodeInfo:
     curr_node: Node
     nodes: list[Node]
+    tiled_nodes: list[Node]
     workspaces: list[Workspace]
 
 
@@ -52,17 +55,18 @@ def app_name_from_node(node):
     return app_name
 
 
-def create_node(node, workspace=Workspace(-1, list()), max_width=-1, max_height=-1):
+def create_node(node, workspace=Workspace(-1, list(), list()), max_width=-1, max_height=-1):
     app_name = app_name_from_node(node)
     node_id = node["id"]
     width = node["rect"]["width"]
     height = node["rect"]["height"]
     if workspace.id == -1:
-        return Node(node_id, workspace, app_name, True, width, height, -1, -1, -1, False)
+        return Node(node_id, workspace, app_name, True, width, height, -1, -1, -1, False, False)
     else:
         y = node["rect"]["y"]
         floating = node["floating"] == "user_on"
-        return Node(node_id, workspace, app_name, False, width, height, max_width, max_height, y, floating)
+        tiled = not floating and app_name != "blank"
+        return Node(node_id, workspace, app_name, False, width, height, max_width, max_height, y, floating, tiled)
 
 
 def get_nested_nodes(node):
@@ -70,7 +74,7 @@ def get_nested_nodes(node):
 
 
 def dict_to_node_info(node_tree_dict):
-    node_info = NodeInfo(Node(-1, Workspace(-1, list()), "", False, -1, -1, -1, -1, -1, False), [], [])
+    node_info = NodeInfo(Node(-1, Workspace(-1, list(), list()), "", False, -1, -1, -1, -1, -1, False, False), [], [], [])
     all_nodes = node_tree_dict["nodes"]
     max_width = -1
     max_height = -1
@@ -90,7 +94,8 @@ def dict_to_node_info(node_tree_dict):
         if not workspace_id:
             continue
         nodes_in_ws = list()
-        workspace = Workspace(workspace_id, nodes_in_ws)
+        tiled_nodes_in_ws = list()
+        workspace = Workspace(workspace_id, nodes_in_ws, tiled_nodes_in_ws)
         node_info.workspaces.append(workspace)
         for ws_node in workspace_nodes:
             assert max_height != -1 and max_width != -1 and workspace_id != -1
@@ -98,6 +103,9 @@ def dict_to_node_info(node_tree_dict):
             curr_node = create_node(ws_node, workspace, max_width, max_height)
             if curr_node.name == "blank":
                 os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
+            if curr_node.tiled:
+                tiled_nodes_in_ws.append(curr_node)
+                node_info.tiled_nodes.append(curr_node)
             node_info.nodes.append(curr_node)
             nodes_in_ws.append(curr_node)
             if ws_node["focused"]:
@@ -144,7 +152,7 @@ def find_empty_workspace(node_info):
 
 
 def move_to_new_workspace(node_info):
-    if node_info.curr_node.name == "blank" or node_info.curr_node.floating:
+    if not node_info.curr_node.tiled:
         return
     first_workspace = node_info.workspaces[0]
     if node_info.curr_node.workspace.id != first_workspace.id:
@@ -170,24 +178,23 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    if node_info.curr_node.floating and node_info.curr_node.name != "blank":
+    if not node_info.curr_node.tiled:
         os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
         return
-    nodes = [i.id for i in node_info.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
+    nodes = node_info.tiled_nodes
     next_node = 0
-    curr_node_id = node_info.curr_node.id
-    if nodes[-1] != node_info.curr_node.id and node_info.curr_node.name != "blank":
+    if nodes[-1].id != node_info.curr_node.id:
         for i in nodes:
             next_node += 1
-            if i == node_info.curr_node.id:
+            if i.id == node_info.curr_node.id:
                 break
-    return nodes[next_node]
+    return nodes[next_node].id
 
 
 def next_node_in_the_same_workspace(node_info: NodeInfo):
-    if node_info.curr_node.floating or node_info.curr_node.name == "blank":
+    if not node_info.curr_node.tiled:
         return
-    nodes = [i for i in node_info.curr_node.workspace.nodes if i.name != "blank" and i.hidden == False and i.floating == False]
+    nodes = node_info.curr_node.workspace.tiled_nodes
     if len(nodes) < 2:
         return -1
     next_node = 0
