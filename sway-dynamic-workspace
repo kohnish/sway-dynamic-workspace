@@ -44,6 +44,10 @@ class NodeInfo:
     workspaces: list[Workspace]
 
 
+def debug_log(msg):
+    os.system("logger sway-dynamic-workspace: DEBUG: {0}".format(msg))
+
+
 def assert_with_log(cond, msg="Assertion failed"):
     if not cond:
         os.system("logger sway-dynamic-workspace: ERROR: AssertionError: {0}".format(msg))
@@ -169,18 +173,16 @@ def prev_workspace(node_info):
 
 
 def next_node(node_info: NodeInfo):
-    if node_info.curr_node.id == -1:
-        return node_info.tiled_nodes[-1].id
     if not node_info.curr_node.tiled:
         os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
-        return
     nodes = node_info.tiled_nodes
-    next_node = 0
-    if nodes[-1].id == node_info.curr_node.id:
-        return nodes[0].id
     for index, node in enumerate(nodes):
         if node.id == node_info.curr_node.id:
-            return nodes[index + 1].id
+            try:
+                return nodes[index + 1].id
+            except:
+                return nodes[0].id
+    return nodes[0].id
 
 
 def next_node_in_the_same_workspace(node_info: NodeInfo):
