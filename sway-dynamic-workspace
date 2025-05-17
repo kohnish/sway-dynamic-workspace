@@ -155,12 +155,15 @@ def move_to_new_workspace(node_info):
 
 
 def next_workspace(node_info):
-    last_workspace = node_info.workspaces[-1]
-    if node_info.curr_node.workspace.id != -1 and node_info.curr_node.workspace.id != last_workspace.id:
+    if not node_info.curr_node.tiled:
+        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+    if node_info.curr_node.workspace.id != node_info.workspaces[-1].id:
         os.system("swaymsg workspace next")
 
 
 def prev_workspace(node_info):
+    if not node_info.curr_node.tiled:
+        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
     if node_info.curr_node.workspace.id != node_info.workspaces[0].id:
         os.system("swaymsg workspace prev")
 
