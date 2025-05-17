@@ -142,19 +142,9 @@ def find_empty_workspace(node_info):
     if len(node_info.workspaces) == 1:
         return 2
     for ws in node_info.workspaces:
-        blank_nodes = list()
-        non_blank_nodes = list()
-        for node in ws.nodes:
-            if node.name == HELLO_WAYLAND_WINDOW_NAME:
-                blank_nodes.append(node)
-            elif node.hidden == False:
-                non_blank_nodes.append(node)
-        if len(blank_nodes) > 0 and len(non_blank_nodes) == 0:
-            fake_empty_workspaces.append(ws)
-    if len(fake_empty_workspaces) > 0:
-        return fake_empty_workspaces[0].id
-    else:
-        return node_info.workspaces[-1].id + 1
+        if len(ws.tiled_nodes) == 0:
+            return ws.id
+    return node_info.workspaces[-1].id + 1
 
 
 def move_to_new_workspace(node_info):
@@ -231,7 +221,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
     elif len(fake_empty_workspaces) > min_ws:
         counter = 0
         for empty_ws in fake_empty_workspaces:
-            if counter >= min_ws:
+            if counter < min_ws:
                 os.system("swaymsg '[con_id={0}]' kill".format(empty_ws.hello_wayland_id))
             counter = counter + 1
 
