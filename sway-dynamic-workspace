@@ -113,7 +113,7 @@ def dict_to_node_info(node_tree_dict):
             if curr_node.name == HELLO_WAYLAND_WINDOW_NAME:
                 os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
                 workspace.hello_wayland_id = curr_node.id
-            if curr_node.tiled:
+            elif curr_node.tiled:
                 tiled_nodes_in_ws.append(curr_node)
                 node_info.tiled_nodes.append(curr_node)
             node_info.nodes.append(curr_node)
