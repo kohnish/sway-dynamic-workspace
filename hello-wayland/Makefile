@@ -1,7 +1,7 @@
 WAYLAND_FLAGS = $(shell pkg-config wayland-client --cflags --libs)
 WAYLAND_PROTOCOLS_DIR = $(shell pkg-config wayland-protocols --variable=pkgdatadir)
 WAYLAND_SCANNER = $(shell pkg-config --variable=wayland_scanner wayland-scanner)
-CFLAGS ?= -std=c11 -Wall -Wextra -Werror -Wno-unused-parameter -s -O2
+CFLAGS ?= -std=c11 -Wall -Wextra -Werror -Wno-unused-parameter -s -Os
 
 XDG_SHELL_PROTOCOL = $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml
 
