@@ -5,10 +5,13 @@ import subprocess
 import os
 import sys
 
-DEBUG = True
+
+HELLO_WAYLAND_WINDOW_NAME = "blank"
+
 
 class Workspace:
     pass
+
 
 @dataclass
 class Node:
@@ -30,6 +33,7 @@ class Workspace:
     id: int
     nodes: list[Node]
     tiled_nodes: list[Node]
+    hello_wayland_id: int
 
 
 @dataclass
@@ -40,9 +44,10 @@ class NodeInfo:
     workspaces: list[Workspace]
 
 
-def debug_log(msg):
-    if DEBUG:
-        os.system("logger sway-dynamic-workspace: DEBUG: {0}".format(msg))
+def assert_with_log(cond, msg="Assertion failed"):
+    if not cond:
+        os.system("logger sway-dynamic-workspace: ERROR: AssertionError: {0}".format(msg))
+        raise AssertionError(msg)
 
 
 def app_name_from_node(node):
@@ -51,11 +56,11 @@ def app_name_from_node(node):
         app_name = node["app_id"]
     elif node.get("window_properties"):
         app_name = node["window_properties"]["class"]
-    assert app_name != ""
+    assert_with_log(app_name != "", "App name must be set")
     return app_name
 
 
-def create_node(node, workspace=Workspace(-1, list(), list()), max_width=-1, max_height=-1):
+def create_node(node, workspace=Workspace(-1, list(), list(), -1), max_width=-1, max_height=-1):
     app_name = app_name_from_node(node)
     node_id = node["id"]
     width = node["rect"]["width"]
@@ -65,7 +70,7 @@ def create_node(node, workspace=Workspace(-1, list(), list()), max_width=-1, max
     else:
         y = node["rect"]["y"]
         floating = node["floating"] == "user_on"
-        tiled = not floating and app_name != "blank"
+        tiled = not floating and app_name != HELLO_WAYLAND_WINDOW_NAME
         return Node(node_id, workspace, app_name, False, width, height, max_width, max_height, y, floating, tiled)
 
 
@@ -74,7 +79,7 @@ def get_nested_nodes(node):
 
 
 def dict_to_node_info(node_tree_dict):
-    node_info = NodeInfo(Node(-1, Workspace(-1, list(), list()), "", False, -1, -1, -1, -1, -1, False, False), [], [], [])
+    node_info = NodeInfo(Node(-1, Workspace(-1, list(), list(), -1), "", False, -1, -1, -1, -1, -1, False, False), [], [], [])
     all_nodes = node_tree_dict["nodes"]
     max_width = -1
     max_height = -1
@@ -95,14 +100,15 @@ def dict_to_node_info(node_tree_dict):
             continue
         nodes_in_ws = list()
         tiled_nodes_in_ws = list()
-        workspace = Workspace(workspace_id, nodes_in_ws, tiled_nodes_in_ws)
+        workspace = Workspace(workspace_id, nodes_in_ws, tiled_nodes_in_ws, -1)
         node_info.workspaces.append(workspace)
         for ws_node in workspace_nodes:
-            assert max_height != -1 and max_width != -1 and workspace_id != -1
+            assert_with_log(max_height != -1 and max_width != -1 and workspace_id != -1, "Unexpected missing node attributes")
             workspace_nodes += get_nested_nodes(ws_node)
             curr_node = create_node(ws_node, workspace, max_width, max_height)
-            if curr_node.name == "blank":
+            if curr_node.name == HELLO_WAYLAND_WINDOW_NAME:
                 os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
+                workspace.hello_wayland_id = curr_node.id
             if curr_node.tiled:
                 tiled_nodes_in_ws.append(curr_node)
                 node_info.tiled_nodes.append(curr_node)
@@ -139,7 +145,7 @@ def find_empty_workspace(node_info):
         blank_nodes = list()
         non_blank_nodes = list()
         for node in ws.nodes:
-            if node.name == "blank":
+            if node.name == HELLO_WAYLAND_WINDOW_NAME:
                 blank_nodes.append(node)
             elif node.hidden == False:
                 non_blank_nodes.append(node)
@@ -216,14 +222,7 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
 def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
     fake_empty_workspaces = list()
     for ws in node_info.workspaces:
-        blank_nodes = list()
-        non_blank_nodes = list()
-        for node in ws.nodes:
-            if node.name == "blank":
-                blank_nodes.append(node)
-            elif node.hidden == False:
-                non_blank_nodes.append(node)
-        if len(blank_nodes) > 0 and len(non_blank_nodes) == 0:
+        if len(ws.tiled_nodes) == 0:
             fake_empty_workspaces.append(ws)
 
     if len(fake_empty_workspaces) < min_ws:
@@ -233,8 +232,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
         counter = 0
         for empty_ws in fake_empty_workspaces:
             if counter >= min_ws:
-                for empty_node in empty_ws.nodes:
-                    os.system("swaymsg '[con_id={0}]' kill".format(empty_node.id))
+                os.system("swaymsg '[con_id={0}]' kill".format(empty_ws.hello_wayland_id))
             counter = counter + 1
 
 
@@ -245,7 +243,7 @@ if __name__ == "__main__":
             stdin = sys.stdin.readlines()[0]
             msg = json.loads(stdin)
             action = msg["change"]
-            if action == "focus" and msg["container"]["app_id"] != "blank":
+            if action == "focus" and msg["container"]["app_id"] != HELLO_WAYLAND_WINDOW_NAME:
                 keep_minimum_workspaces(get_nodes(), 1)
         elif sys.argv[1] == "next":
             next_workspace(get_nodes())
