@@ -138,9 +138,6 @@ def get_nodes():
 
 
 def find_empty_workspace(node_info):
-    fake_empty_workspaces = list()
-    if len(node_info.workspaces) == 1:
-        return 2
     for ws in node_info.workspaces:
         if len(ws.tiled_nodes) == 0:
             return ws.id
