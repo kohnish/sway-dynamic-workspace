@@ -52,7 +52,9 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    # When the focused floating window unmaximised, resize to width 100%, height 50%, starting x and y position 0,
    # otherwise maximise (not the fullscreen of sway to keep floating behaviour)
    bindsym f11 exec sway-dynamic-workspace toggle-maximize 100 50 0 0
-
+   # For waybar user, correct the size of quake mode display calculating from the (non-)waybar position.
+   bindsym ctrl+shift+p exec sh -c "pkill -SIGUSR1 waybar ; $toggle_maximize_cmd ; $toggle_maximize_cmd"
+	
    # Resize nodes
    bindsym ctrl+shift+h exec sway-resize left 1
    bindsym ctrl+shift+l exec sway-resize right 1
