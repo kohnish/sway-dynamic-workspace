@@ -226,6 +226,13 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
             counter = counter + 1
 
 
+def move_node_to_workspace(node_info: NodeInfo, target_index):
+    for index, workspace in enumerate(node_info.workspaces):
+        if index == int(target_index):
+            os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node.id, workspace.id))
+            return
+
+
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc >= 2:
@@ -235,6 +242,8 @@ if __name__ == "__main__":
             action = msg["change"]
             if action == "focus" and msg["container"]["app_id"] != HELLO_WAYLAND_WINDOW_NAME:
                 keep_minimum_workspaces(get_nodes(), 1)
+        elif sys.argv[1] == "to-workspace":
+            move_node_to_workspace(get_nodes(), sys.argv[2])
         elif sys.argv[1] == "next":
             next_workspace(get_nodes())
         elif sys.argv[1] == "prev":

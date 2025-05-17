@@ -54,7 +54,14 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    bindsym f11 exec sway-dynamic-workspace toggle-maximize 100 50 0 0
    # For waybar user, correct the size of quake mode display calculating from the (non-)waybar position.
    bindsym ctrl+shift+p exec sh -c "pkill -SIGUSR1 waybar ; $toggle_maximize_cmd ; $toggle_maximize_cmd"
-	
+   # Move focused node to some workspace by index (0 based)
+   bindsym ctrl+shift+1 exec sway-dynamic-workspace move-to-workspace 0
+   bindsym ctrl+shift+2 exec sway-dynamic-workspace move-to-workspace 1
+   bindsym ctrl+shift+3 exec sway-dynamic-workspace move-to-workspace 2   
+   bindsym ctrl+shift+4 exec sway-dynamic-workspace move-to-workspace 3
+   bindsym ctrl+shift+5 exec sway-dynamic-workspace move-to-workspace 4
+
+   
    # Resize nodes
    bindsym ctrl+shift+h exec sway-resize left 1
    bindsym ctrl+shift+l exec sway-resize right 1
