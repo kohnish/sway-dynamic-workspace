@@ -41,6 +41,7 @@ class NodeInfo:
     curr_node: Node
     nodes: list[Node]
     tiled_nodes: list[Node]
+    hidden_nodes: list[Node]
     workspaces: list[Workspace]
 
 
@@ -83,17 +84,19 @@ def get_nested_nodes(node):
 
 
 def dict_to_node_info(node_tree_dict):
-    node_info = NodeInfo(Node(-1, Workspace(-1, list(), list(), -1), "", False, -1, -1, -1, -1, -1, False, False), [], [], [])
+    node_info = NodeInfo(Node(-1, Workspace(-1, list(), list(), -1), "", False, -1, -1, -1, -1, -1, False, False), [], [], [], [])
     all_nodes = node_tree_dict["nodes"]
     max_width = -1
     max_height = -1
     for node in all_nodes:
-        if node["name"] == "__i3_scratch":
-            for hidden_node in get_nested_nodes(node):
-                node_info.nodes.append(create_node(hidden_node))
-            continue
         workspace_nodes = get_nested_nodes(node)
         all_nodes += workspace_nodes
+        if node["name"] == "__i3_scratch":
+            for hidden_node in workspace_nodes:
+                hidden_node_obj = create_node(hidden_node)
+                node_info.nodes.append(hidden_node_obj)
+                node_info.hidden_nodes.append(hidden_node_obj)
+            continue
         current_mode = node.get("current_mode")
         if current_mode:
             max_width = current_mode["width"]
