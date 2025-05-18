@@ -257,7 +257,7 @@ def prompt_app_switcher(node_info: NodeInfo):
         if node.workspace.hello_wayland_id != node.id:
             str_list += "{0}\n".format(node.window_name)
 
-    fuzzel_cmd = "fuzzel --index --no-run-if-empty -d"
+    fuzzel_cmd = "fuzzel -l {0} --index --no-run-if-empty -d".format(str_list.count('\n'))
     maybe_id = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
     if not node_info.curr_node.tiled:
         os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
