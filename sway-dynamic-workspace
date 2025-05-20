@@ -244,7 +244,7 @@ def next_node_in_the_same_workspace(node_info: NodeInfo):
 def toggle_hidden(node_info: NodeInfo, name, cmd):
     target_node = find_node_by_name(node_info, name)
     if not target_node:
-        return
+        os.system(cmd)
     if target_node.tiled:
         swaymsg_hide_tiled_node(target_node.id)
     else:
