@@ -89,8 +89,31 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
         return Node(node_id, workspace, app_name, win_name, False, width, height, max_width, max_height, y, floating, tiled)
 
 
+def swaymsg_focus_or_create_workspace(workspace_id):
+    os.system("swaymsg workspace {0}".format(workspace_id))
+
+
+def swaymsg_hide_tiled_node(node_id):
+    os.system("swaymsg '[con_id={0}]' move scratchpad".format(node_id))
+
+
 def swaymsg_toggle_hidden_node(node_id):
     os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_id))
+
+
+def swaymsg_focus_on_node(node_id):
+    os.system("swaymsg '[con_id={0}]' focus".format(node_id))
+
+
+def swaymsg_move_node_to_workspace(node_id, workspace_id):
+    os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_id, workspace_id))
+
+
+def find_node_by_name(node_info, name):
+    target_node = [i for i in node_info.nodes if i.name == name]
+    if len(target_node) == 0:
+        return None
+    return target_node[0]
 
 
 def get_nested_nodes(node):
@@ -172,7 +195,7 @@ def move_to_new_workspace(node_info):
         next_workspace = find_empty_workspace(node_info)
     else:
         next_workspace = node_info.workspaces[0].id
-    os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node.id, next_workspace))
+    swaymsg_move_node_to_workspace(node_info.curr_node.id, next_workspace)
 
 
 def next_workspace(node_info):
@@ -219,19 +242,22 @@ def next_node_in_the_same_workspace(node_info: NodeInfo):
 
 
 def toggle_hidden(node_info: NodeInfo, name, cmd):
-    target_node = [i for i in node_info.nodes if i.name == name]
-    if len(target_node) == 0:
+    target_node = find_node_by_name(node_info, name)
+    if not target_node:
         return
-    swaymsg_toggle_hidden_node(target_node[0].id)
+    if target_node.tiled:
+        swaymsg_hide_tiled_node(target_node.id)
+    else:
+        swaymsg_toggle_hidden_node(target_node.id)
 
 
 def to_app(node_info: NodeInfo, name):
-    target_node = [i for i in node_info.nodes if i.name == name]
-    if len(target_node) == 0:
+    target_node = find_node_by_name(node_info, name)
+    if not target_node:
         return
     if not node_info.curr_node.tiled:
         swaymsg_toggle_hidden_node(node_info.curr_node.id)
-    os.system("swaymsg '[con_id={0}]' focus".format(target_node[0].id))
+    swaymsg_focus_on_node(target_node.id)
 
 
 def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
@@ -241,7 +267,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
             fake_empty_workspaces.append(ws)
     if len(fake_empty_workspaces) < min_ws:
         os.system("swaymsg workspace {0}, exec hello-wayland".format(node_info.workspaces[-1].id + 1))
-        os.system("swaymsg workspace {0}".format(node_info.curr_node.workspace.id))
+        swaymsg_focus_or_create_workspace(node_info.curr_node.workspace.id)
     elif len(fake_empty_workspaces) > min_ws:
         counter = 0
         for empty_ws in fake_empty_workspaces:
@@ -253,7 +279,7 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
 def move_node_to_workspace(node_info: NodeInfo, target_index):
     for index, workspace in enumerate(node_info.workspaces):
         if index == int(target_index):
-            os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node_info.curr_node.id, workspace.id))
+            swaymsg_move_node_to_workspace(node_info.curr_node.id, workspace.id)
             return
 
 
@@ -268,7 +294,7 @@ def prompt_app_switcher(node_info: NodeInfo):
     maybe_id = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
     if not node_info.curr_node.tiled:
         swaymsg_toggle_hidden_node(node_info.curr_node.id)
-    os.system("swaymsg '[con_id={0}]' focus".format(app_dict[maybe_id].id))
+    swaymsg_focus_on_node(app_dict[maybe_id].id)
 
 
 if __name__ == "__main__":
