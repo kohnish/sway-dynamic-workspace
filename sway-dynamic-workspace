@@ -89,6 +89,10 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
         return Node(node_id, workspace, app_name, win_name, False, width, height, max_width, max_height, y, floating, tiled)
 
 
+def swaymsg_toggle_hidden_node(node_id):
+    os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_id))
+
+
 def get_nested_nodes(node):
     return node["floating_nodes"] + node["nodes"]
 
@@ -173,21 +177,21 @@ def move_to_new_workspace(node_info):
 
 def next_workspace(node_info):
     if not node_info.curr_node.tiled:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        swaymsg_toggle_hidden_node(node_info.curr_node.id)
     if node_info.curr_node.workspace.id != node_info.workspaces[-1].id:
         os.system("swaymsg workspace next")
 
 
 def prev_workspace(node_info):
     if not node_info.curr_node.tiled:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        swaymsg_toggle_hidden_node(node_info.curr_node.id)
     if node_info.curr_node.workspace.id != node_info.workspaces[0].id:
         os.system("swaymsg workspace prev")
 
 
 def next_node(node_info: NodeInfo):
     if not node_info.curr_node.tiled:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        swaymsg_toggle_hidden_node(node_info.curr_node.id)
     nodes = node_info.tiled_nodes
     for index, node in enumerate(nodes):
         if node.id == node_info.curr_node.id:
@@ -218,10 +222,7 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
     target_node = [i for i in node_info.nodes if i.name == name]
     if len(target_node) == 0:
         return
-    if target_node[0].hidden:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
-    else:
-        os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
+    swaymsg_toggle_hidden_node(target_node[0].id)
 
 
 def to_app(node_info: NodeInfo, name):
@@ -229,7 +230,7 @@ def to_app(node_info: NodeInfo, name):
     if len(target_node) == 0:
         return
     if not node_info.curr_node.tiled:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        swaymsg_toggle_hidden_node(node_info.curr_node.id)
     os.system("swaymsg '[con_id={0}]' focus".format(target_node[0].id))
 
 
@@ -238,7 +239,6 @@ def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
     for ws in node_info.workspaces:
         if len(ws.tiled_nodes) == 0:
             fake_empty_workspaces.append(ws)
-
     if len(fake_empty_workspaces) < min_ws:
         os.system("swaymsg workspace {0}, exec hello-wayland".format(node_info.workspaces[-1].id + 1))
         os.system("swaymsg workspace {0}".format(node_info.curr_node.workspace.id))
@@ -264,11 +264,10 @@ def prompt_app_switcher(node_info: NodeInfo):
         app_dict[idx] = node
         if node.workspace.hello_wayland_id != node.id:
             str_list += "{0}\n".format(node.window_name)
-
     fuzzel_cmd = "fuzzel -l {0} --index --no-run-if-empty -d".format(str_list.count('\n'))
     maybe_id = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
     if not node_info.curr_node.tiled:
-        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+        swaymsg_toggle_hidden_node(node_info.curr_node.id)
     os.system("swaymsg '[con_id={0}]' focus".format(app_dict[maybe_id].id))
 
 
