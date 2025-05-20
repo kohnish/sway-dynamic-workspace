@@ -16,8 +16,8 @@ class Workspace:
 
 @dataclass
 class Node:
+    workspace: Workspace
     id: int = -1
-    workspace: Workspace = field(default_factory=Workspace)
     name: str = ""
     window_name: str = ""
     hidden: bool = False
@@ -40,7 +40,7 @@ class Workspace:
 
 @dataclass
 class NodeInfo:
-    curr_node: Node = field(default_factory=Node)
+    curr_node: Node = field(default_factory=lambda: Node(Workspace()))
     nodes: list[Node] = field(default_factory=list)
     tiled_nodes: list[Node] = field(default_factory=list)
     hidden_nodes: list[Node] = field(default_factory=list)
@@ -81,12 +81,12 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
     width = node["rect"]["width"]
     height = node["rect"]["height"]
     if workspace.id == -1:
-        return Node(id=node_id, workspace=workspace, name=app_name, window_name=win_name, hidden=True)
+        return Node(workspace, id=node_id, name=app_name, window_name=win_name, hidden=True)
     else:
         y = node["rect"]["y"]
         floating = node["floating"] == "user_on"
         tiled = not floating and app_name != HELLO_WAYLAND_WINDOW_NAME
-        return Node(node_id, workspace, app_name, win_name, False, width, height, max_width, max_height, y, floating, tiled)
+        return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, y, floating, tiled)
 
 
 def swaymsg_focus_or_create_workspace(workspace_id):
