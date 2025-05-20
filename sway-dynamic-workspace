@@ -217,12 +217,20 @@ def next_node_in_the_same_workspace(node_info: NodeInfo):
 def toggle_hidden(node_info: NodeInfo, name, cmd):
     target_node = [i for i in node_info.nodes if i.name == name]
     if len(target_node) == 0:
-        os.system("{0}".format(cmd))
+        return
+    if target_node[0].hidden:
+        os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
     else:
-        if target_node[0].hidden:
-            os.system("swaymsg '[con_id={0}]' scratchpad show".format(target_node[0].id))
-        else:
-            os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
+        os.system("swaymsg '[con_id={0}]' move scratchpad".format(target_node[0].id))
+
+
+def to_app(node_info: NodeInfo, name):
+    target_node = [i for i in node_info.nodes if i.name == name]
+    if len(target_node) == 0:
+        return
+    if not node_info.curr_node.tiled:
+        os.system("swaymsg '[con_id={0}]' scratchpad show".format(node_info.curr_node.id))
+    os.system("swaymsg '[con_id={0}]' focus".format(target_node[0].id))
 
 
 def keep_minimum_workspaces(node_info: NodeInfo, min_ws):
@@ -275,6 +283,8 @@ if __name__ == "__main__":
                 keep_minimum_workspaces(get_nodes(), 1)
         elif sys.argv[1] == "to-workspace":
             move_node_to_workspace(get_nodes(), sys.argv[2])
+        elif sys.argv[1] == "to-app":
+            to_app(get_nodes(), sys.argv[2])
         elif sys.argv[1] == "next":
             next_workspace(get_nodes())
         elif sys.argv[1] == "prev":
