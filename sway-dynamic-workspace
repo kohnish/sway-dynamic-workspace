@@ -274,19 +274,21 @@ def to_app(node_info: NodeInfo, name):
     swaymsg_focus_on_node(target_node)
 
 
-def keep_one_empty_workspace(node_info: NodeInfo):
+def keep_minimum_workspaces(node_info: NodeInfo):
     fake_empty_workspaces = list()
     for ws in node_info.workspaces:
         if len(ws.tiled_nodes) == 0:
             fake_empty_workspaces.append(ws)
     if len(fake_empty_workspaces) < 1:
-        os.system("swaymsg workspace {0}, exec hello-wayland, workspace {1}".format(node_info.workspaces[-1].id + 1), node_info.curr_node.workspace.id)
+        os.system("swaymsg workspace {0}".format(node_info.workspaces[-1].id + 1))
+        os.system("swaymsg exec hello-wayland")
+        swaymsg_focus_or_create_workspace(node_info.curr_node.workspace.id)
     elif len(fake_empty_workspaces) > 1:
-        for idx, empty_ws in enumerate(fake_empty_workspaces):
-            if idx < 1:
+        counter = 0
+        for empty_ws in fake_empty_workspaces:
+            if counter < 1:
                 os.system("swaymsg '[con_id={0}]' kill".format(empty_ws.hello_wayland_id))
-            else:
-                break
+            counter = counter + 1
 
 
 def move_node_to_workspace(node_info: NodeInfo, target_index):
@@ -318,7 +320,7 @@ if __name__ == "__main__":
             msg = json.loads(stdin)
             action = msg["change"]
             if action == "focus" and msg["container"]["app_id"] != HELLO_WAYLAND_WINDOW_NAME:
-                keep_one_empty_workspace(get_nodes())
+                keep_minimum_workspaces(get_nodes())
         elif sys.argv[1] == "to-workspace":
             move_node_to_workspace(get_nodes(), sys.argv[2])
         elif sys.argv[1] == "to-app":
