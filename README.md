@@ -29,7 +29,8 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    e.g.  
    ```
    # A daemon to keep one empty workspace (requires executable called hello-wayland(blank dot gui process) in the PATH)
-   # It'll create an empty black dot node to stop sway from killing empty workspaces.
+   # It'll create an empty black dot node named blank to stop sway from killing empty workspaces.
+   for_window [app_id="blank"] floating enable   
    exec sway-keep-workspace
 
    # Move current node to next dynamic workspace (maximize)

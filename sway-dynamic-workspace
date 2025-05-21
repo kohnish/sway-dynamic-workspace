@@ -161,7 +161,6 @@ def dict_to_node_info(node_tree_dict):
             workspace_nodes += get_nested_nodes(ws_node)
             curr_node = create_node(ws_node, workspace, max_width, max_height)
             if curr_node.name == HELLO_WAYLAND_WINDOW_NAME:
-                os.system("swaymsg '[con_id={0}]' floating enable".format(curr_node.id))
                 workspace.hello_wayland_id = curr_node.id
             elif curr_node.tiled:
                 tiled_nodes_in_ws.append(curr_node)
