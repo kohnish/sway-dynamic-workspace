@@ -58,13 +58,12 @@ def assert_with_log(cond, msg="Assertion failed"):
 
 
 def app_name_from_node(node):
-    app_name = ""
-    if node.get("app_id"):
-        app_name = node["app_id"]
-    elif node.get("window_properties"):
-        app_name = node["window_properties"]["class"]
-    elif node.get("name"):
-        app_name = node["name"]
+    app_name = node.get("app_id")
+    if not app_name or app_name == "":
+        wp = node.get("window_properties")
+        app_name = wp.get("class")
+        if not app_name or app_name == "":
+            app_name = node.get("name")
     assert_with_log(app_name != "", "App name must be set {0}".format(node))
     return app_name
 
