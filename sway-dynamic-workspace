@@ -134,8 +134,11 @@ def get_nested_nodes(node):
 def dict_to_node_info(node_tree_dict):
     node_info = NodeInfo()
     all_nodes = node_tree_dict["nodes"]
-    max_width = -1
-    max_height = -1
+    # max_width = -1
+    # max_height = -1
+    current_disp = node_tree_dict["rect"]
+    max_width = current_disp["width"]
+    max_height = current_disp["height"]
     for node in all_nodes:
         workspace_nodes = get_nested_nodes(node)
         all_nodes += workspace_nodes
@@ -147,8 +150,8 @@ def dict_to_node_info(node_tree_dict):
             continue
         current_mode = node.get("current_mode")
         if current_mode:
-            max_width = current_mode["width"]
-            max_height = current_mode["height"]
+            # max_width = current_mode["width"]
+            # max_height = current_mode["height"]
             continue
         workspace_id = node.get("num")
         if not workspace_id:
