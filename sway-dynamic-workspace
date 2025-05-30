@@ -65,7 +65,8 @@ def app_name_from_node(node):
             app_name = wp.get("class")
             if not app_name or app_name == "":
                 app_name = node.get("name")
-    assert_with_log(app_name != "", "App name must be set {0}".format(node))
+    if app_name == None or app_name == "":
+        debug_log("App name must be set {0}".format(node))
     return app_name
 
 
