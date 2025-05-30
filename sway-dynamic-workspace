@@ -66,8 +66,8 @@ def app_name_from_node(node):
             app_name = wp.get("class")
             if not app_name or app_name == "":
                 app_name = node.get("name")
-    if app_name == None or app_name == "":
-        debug_log("App name must be set {0}".format(node))
+    if not app_name or app_name == "":
+        app_name = "untitled-{}".format(node.get("pid"))
     return app_name
 
 
