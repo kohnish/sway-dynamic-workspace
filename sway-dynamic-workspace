@@ -25,6 +25,7 @@ class Node:
     height: int = -1
     max_width: int = -1
     max_height: int = -1
+    pos_x: int = -1
     pos_y: int = -1
     floating: bool = False
     tiled: bool = False
@@ -86,10 +87,11 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
     if workspace.id == -1:
         return Node(workspace, id=node_id, name=app_name, window_name=win_name, hidden=True)
     else:
+        x = node["rect"]["x"]
         y = node["rect"]["y"]
         floating = node["floating"] == "user_on"
         tiled = not floating and app_name != HELLO_WAYLAND_WINDOW_NAME
-        return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, y, floating, tiled)
+        return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, x, y, floating, tiled)
 
 
 def swaymsg_focus_or_create_workspace(workspace_id):
@@ -182,7 +184,7 @@ def toggle_maximize(node_info: NodeInfo, default_width_percentage, default_heigh
     default_width = int(node_info.curr_node.max_width * (default_width_percentage / 100))
     default_height = int(node_info.curr_node.max_height * (default_height_percentage / 100))
     if node_info.curr_node.width == default_width and node_info.curr_node.height == default_height:
-        os.system("swaymsg resize set {0} {1}, move position 0 0".format(node_info.curr_node.max_width, node_info.curr_node.max_height - node_info.curr_node.pos_y))
+        os.system("swaymsg resize set {0} {1}, move position 0 0".format(node_info.curr_node.max_width - node_info.curr_node.pos_x, node_info.curr_node.max_height - node_info.curr_node.pos_y))
     else:
         os.system("swaymsg resize set {0} {1}, move position {2} {3}".format(default_width, default_height, default_x, default_y))
 
