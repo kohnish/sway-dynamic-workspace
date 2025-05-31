@@ -139,8 +139,6 @@ def get_nested_nodes(node):
 def dict_to_node_info(node_tree_dict):
     node_info = NodeInfo()
     all_nodes = node_tree_dict["nodes"]
-    # max_width = -1
-    # max_height = -1
     current_disp = node_tree_dict["rect"]
     max_width = current_disp["width"]
     max_height = current_disp["height"]
@@ -153,18 +151,12 @@ def dict_to_node_info(node_tree_dict):
                 node_info.nodes.append(hidden_node_obj)
                 node_info.hidden_nodes.append(hidden_node_obj)
             continue
-        current_mode = node.get("current_mode")
-        if current_mode:
-            # max_width = current_mode["width"]
-            # max_height = current_mode["height"]
-            continue
         workspace_id = node.get("num")
         if not workspace_id:
             continue
         workspace = Workspace(id=workspace_id)
         node_info.workspaces.append(workspace)
         for ws_node in workspace_nodes:
-            assert_with_log(max_height != -1 and max_width != -1 and workspace_id != -1, "Unexpected missing node attributes")
             workspace_nodes += get_nested_nodes(ws_node)
             curr_node = create_node(ws_node, workspace, max_width, max_height)
             if curr_node.name == HELLO_WAYLAND_WINDOW_NAME:
