@@ -36,6 +36,7 @@ class Workspace:
     id: int = -1
     nodes: list[Node] = field(default_factory=list)
     tiled_nodes: list[Node] = field(default_factory=list)
+    visible_nodes: list[Node] = field(default_factory=list)
     hello_wayland_id: int = -1
 
 
@@ -160,9 +161,7 @@ def dict_to_node_info(node_tree_dict):
         workspace_id = node.get("num")
         if not workspace_id:
             continue
-        nodes_in_ws = list()
-        tiled_nodes_in_ws = list()
-        workspace = Workspace(workspace_id, nodes_in_ws, tiled_nodes_in_ws, -1)
+        workspace = Workspace(id=workspace_id)
         node_info.workspaces.append(workspace)
         for ws_node in workspace_nodes:
             assert_with_log(max_height != -1 and max_width != -1 and workspace_id != -1, "Unexpected missing node attributes")
@@ -170,11 +169,13 @@ def dict_to_node_info(node_tree_dict):
             curr_node = create_node(ws_node, workspace, max_width, max_height)
             if curr_node.name == HELLO_WAYLAND_WINDOW_NAME:
                 workspace.hello_wayland_id = curr_node.id
-            elif curr_node.tiled:
-                tiled_nodes_in_ws.append(curr_node)
-                node_info.tiled_nodes.append(curr_node)
+            else:
+                workspace.visible_nodes.append(curr_node)
+                if curr_node.tiled:
+                    workspace.tiled_nodes.append(curr_node)
+                    node_info.tiled_nodes.append(curr_node)
             node_info.nodes.append(curr_node)
-            nodes_in_ws.append(curr_node)
+            workspace.nodes.append(curr_node)
             if ws_node["focused"]:
                 node_info.curr_node = curr_node
     return node_info
@@ -282,18 +283,18 @@ def to_app(node_info: NodeInfo, name):
 
 
 def keep_minimum_workspaces(node_info: NodeInfo):
-    minimum_emptry_ws_num = 1
+    minimum_empty_ws_num = 1
     fake_empty_workspaces = list()
     for ws in node_info.workspaces:
-        if len(ws.tiled_nodes) == 0:
+        if len(ws.visible_nodes) == 0:
             fake_empty_workspaces.append(ws)
-    if len(fake_empty_workspaces) < minimum_emptry_ws_num:
+    if len(fake_empty_workspaces) < minimum_empty_ws_num:
         os.system("swaymsg workspace {0}".format(node_info.workspaces[-1].id + 1))
         os.system("swaymsg exec hello-wayland")
         swaymsg_focus_or_create_workspace(node_info.curr_node.workspace.id)
-    elif len(fake_empty_workspaces) > minimum_emptry_ws_num:
+    elif len(fake_empty_workspaces) > minimum_empty_ws_num:
         for idx, empty_ws in enumerate(fake_empty_workspaces):
-            if idx < minimum_emptry_ws_num:
+            if idx < minimum_empty_ws_num:
                 os.system("swaymsg '[con_id={0}]' kill".format(empty_ws.hello_wayland_id))
             else:
                 break
