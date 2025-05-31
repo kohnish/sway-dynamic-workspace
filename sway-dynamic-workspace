@@ -16,7 +16,7 @@ class Workspace:
 
 @dataclass
 class Node:
-    workspace: Workspace
+    workspace: Workspace = field(default_factory=lambda: Workspace())
     id: int = -1
     name: str = ""
     window_name: str = ""
@@ -41,7 +41,7 @@ class Workspace:
 
 @dataclass
 class NodeInfo:
-    curr_node: Node = field(default_factory=lambda: Node(Workspace()))
+    curr_node: Node = field(default_factory=lambda: Node())
     nodes: OrderedDict[str, Node] = field(default_factory=OrderedDict)
     tiled_nodes: list[Node] = field(default_factory=list)
     workspaces: list[Workspace] = field(default_factory=list)
@@ -84,7 +84,7 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
     width = node["rect"]["width"]
     height = node["rect"]["height"]
     if workspace.id == -1:
-        return Node(workspace, id=node_id, name=app_name, window_name=win_name, hidden=True)
+        return Node(workspace=workspace, id=node_id, name=app_name, window_name=win_name, hidden=True)
     else:
         x = node["rect"]["x"]
         y = node["rect"]["y"]
