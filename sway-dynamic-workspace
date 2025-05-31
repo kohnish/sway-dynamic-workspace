@@ -57,29 +57,22 @@ def assert_with_log(cond, msg="Assertion failed"):
         raise AssertionError(msg)
 
 
-def app_name_from_node(node):
+def app_and_win_name_from_node(node):
     app_name = node.get("app_id")
+    win_name = node.get("name")
     if not app_name or app_name == "":
         wp = node.get("window_properties")
         if wp:
             app_name = wp.get("class")
             if not app_name or app_name == "":
-                app_name = node.get("name")
+                app_name = win_name
     if not app_name or app_name == "":
         app_name = "untitled-{}".format(node.get("pid"))
-    return app_name
-
-
-def win_name_from_node(node, fallback):
-    app_name = node.get("name")
-    if not app_name or app_name == "":
-        return fallback
-    return app_name
+    return app_name, win_name
 
 
 def create_node(node, workspace, max_width=-1, max_height=-1):
-    app_name = app_name_from_node(node)
-    win_name = win_name_from_node(node, app_name)
+    app_name, win_name = app_and_win_name_from_node(node)
     node_id = node["id"]
     width = node["rect"]["width"]
     height = node["rect"]["height"]
