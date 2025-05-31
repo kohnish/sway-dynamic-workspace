@@ -4,7 +4,7 @@ import json
 import subprocess
 import os
 import sys
-
+from collections import OrderedDict
 
 HELLO_WAYLAND_WINDOW_NAME = "blank"
 
@@ -34,7 +34,6 @@ class Node:
 @dataclass
 class Workspace:
     id: int = -1
-    nodes: list[Node] = field(default_factory=list)
     tiled_nodes: list[Node] = field(default_factory=list)
     visible_nodes: list[Node] = field(default_factory=list)
     hello_wayland_id: int = -1
@@ -43,9 +42,8 @@ class Workspace:
 @dataclass
 class NodeInfo:
     curr_node: Node = field(default_factory=lambda: Node(Workspace()))
-    nodes: list[Node] = field(default_factory=list)
+    nodes: OrderedDict[str, Node] = field(default_factory=OrderedDict)
     tiled_nodes: list[Node] = field(default_factory=list)
-    hidden_nodes: list[Node] = field(default_factory=list)
     workspaces: list[Workspace] = field(default_factory=list)
 
 
@@ -126,10 +124,7 @@ def swaymsg_move_node_to_workspace(node, workspace_id):
 
 
 def find_node_by_name(node_info, name):
-    target_node = [i for i in node_info.nodes if i.name == name]
-    if len(target_node) == 0:
-        return None
-    return target_node[0]
+    return node_info.nodes.get(name)
 
 
 def get_nested_nodes(node):
@@ -148,8 +143,7 @@ def dict_to_node_info(node_tree_dict):
         if node["name"] == "__i3_scratch":
             for hidden_node in workspace_nodes:
                 hidden_node_obj = create_node(hidden_node, Workspace())
-                node_info.nodes.append(hidden_node_obj)
-                node_info.hidden_nodes.append(hidden_node_obj)
+                node_info.nodes[hidden_node_obj.name] = hidden_node_obj
             continue
         workspace_id = node.get("num")
         if not workspace_id:
@@ -163,11 +157,10 @@ def dict_to_node_info(node_tree_dict):
                 workspace.hello_wayland_id = curr_node.id
             else:
                 workspace.visible_nodes.append(curr_node)
+                node_info.nodes[curr_node.name] = curr_node
                 if curr_node.tiled:
                     workspace.tiled_nodes.append(curr_node)
                     node_info.tiled_nodes.append(curr_node)
-            node_info.nodes.append(curr_node)
-            workspace.nodes.append(curr_node)
             if ws_node["focused"]:
                 node_info.curr_node = curr_node
     return node_info
@@ -301,16 +294,13 @@ def move_node_to_workspace(node_info: NodeInfo, target_index):
 
 def prompt_app_switcher(node_info: NodeInfo):
     str_list = ""
-    app_dict = {}
-    for idx, node in enumerate(node_info.nodes):
-        app_dict[idx] = node
-        if node.workspace.hello_wayland_id != node.id:
-            str_list += "{0}\n".format(node.window_name)
+    for _, node in node_info.nodes.items():
+        str_list += "{0}\n".format(node.window_name)
     fuzzel_cmd = "fuzzel -l {0} --index --no-run-if-empty -d".format(str_list.count('\n'))
-    maybe_id = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
+    chosen_idx = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
     if not node_info.curr_node.tiled:
         swaymsg_hide_node(node_info.curr_node)
-    swaymsg_focus_on_node(app_dict[maybe_id])
+    swaymsg_focus_on_node(list(node_info.nodes.values())[chosen_idx])
 
 
 if __name__ == "__main__":
