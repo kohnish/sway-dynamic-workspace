@@ -160,13 +160,9 @@ def toggle_maximize(node_info: NodeInfo, default_width_percentage, default_heigh
         os.system("swaymsg resize set {0} {1}, move position {2} {3}".format(default_width, default_height, default_x, default_y))
 
 
-def get_tree():
-    json_str = subprocess.check_output(["swaymsg", "-t", "get_tree"])
-    return json.loads(json_str)
-
-
 def get_nodes():
-    return dict_to_node_info(get_tree())
+    json_str = subprocess.check_output(["swaymsg", "-t", "get_tree"])
+    return dict_to_node_info(json.loads(json_str))
 
 
 def find_empty_workspace(node_info):
