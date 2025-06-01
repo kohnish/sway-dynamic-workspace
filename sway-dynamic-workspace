@@ -282,6 +282,12 @@ def prompt_app_switcher(node_info: NodeInfo):
     swaymsg_focus_on_node(list(node_info.nodes.values())[chosen_idx])
 
 
+def prompt_app_launcher(node_info: NodeInfo):
+    subprocess.check_output(["fuzzel"])
+    if not node_info.curr_node.tiled:
+        swaymsg_hide_node(node_info.curr_node)
+
+
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc >= 2:
@@ -309,5 +315,7 @@ if __name__ == "__main__":
             toggle_maximize(get_nodes(), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]))
         elif sys.argv[1] == "app-switcher":
             prompt_app_switcher(get_nodes())
+        elif sys.argv[1] == "app-launcher":
+            prompt_app_launcher(get_nodes())
     else:
         move_to_new_workspace(get_nodes())
