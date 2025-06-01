@@ -86,10 +86,6 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
         return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, x, y, floating, tiled)
 
 
-def swaymsg_focus_or_create_workspace(workspace_id):
-    os.system("swaymsg workspace {0}".format(workspace_id))
-
-
 def swaymsg_hide_node(node):
     if node.name == HELLO_WAYLAND_WINDOW_NAME:
         return
@@ -114,10 +110,6 @@ def swaymsg_move_node_to_workspace(node, workspace_id):
     if node.name == HELLO_WAYLAND_WINDOW_NAME:
         return
     os.system("swaymsg '[con_id={0}]' move container to workspace {1}, workspace {1}".format(node.id, workspace_id))
-
-
-def find_node_by_name(node_info, name):
-    return node_info.nodes.get(name)
 
 
 def get_nested_nodes(node):
@@ -238,7 +230,7 @@ def next_node_in_the_same_workspace(node_info: NodeInfo):
 
 
 def toggle_hidden(node_info: NodeInfo, name, cmd):
-    target_node = find_node_by_name(node_info, name)
+    target_node = node_info.nodes.get(name)
     if not target_node:
         os.system(cmd)
         return
@@ -252,7 +244,7 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
 
 
 def to_app(node_info: NodeInfo, name):
-    target_node = find_node_by_name(node_info, name)
+    target_node = node_info.nodes.get(name)
     if not target_node:
         return
     if not node_info.curr_node.tiled:
@@ -267,9 +259,7 @@ def keep_minimum_workspaces(node_info: NodeInfo):
         if len(ws.visible_nodes) == 0:
             fake_empty_workspaces.append(ws)
     if len(fake_empty_workspaces) < minimum_empty_ws_num:
-        os.system("swaymsg workspace {0}".format(node_info.workspaces[-1].id + 1))
-        os.system("swaymsg exec hello-wayland")
-        swaymsg_focus_or_create_workspace(node_info.curr_node.workspace.id)
+        os.system("swaymsg workspace {0}, exec hello-wayland, workspace {1}".format(node_info.workspaces[-1].id + 1, node_info.curr_node.workspace.id))
     elif len(fake_empty_workspaces) > minimum_empty_ws_num:
         for idx, empty_ws in enumerate(fake_empty_workspaces):
             if idx < minimum_empty_ws_num:
