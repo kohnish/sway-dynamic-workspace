@@ -278,8 +278,10 @@ def prompt_app_switcher(node_info: NodeInfo):
         app_name = ""
         win_name = ""
         if node.name!= node.window_name:
-            app_name_orig = node.name.split(".")[-1]
-        if app_name_orig.lower() not in node.window_name.lower():
+            app_name_last = node.name.split(".")[-1]
+            if app_name_last != None:
+                app_name_orig = app_name_last
+        if node.window_name != None and app_name_orig.lower() not in node.window_name.lower():
             win_name = node.window_name
             app_name = app_name_orig + " - "
         else:
@@ -304,6 +306,12 @@ def kill_node(node_info: NodeInfo):
     os.system("swaymsg kill")
 
 
+def to_scratchpad(node_info: NodeInfo):
+    if node_info.curr_node.workspace.hello_wayland_id == node_info.curr_node.id:
+        return
+    os.system("swaymsg move scratchpad")
+
+
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc >= 2:
@@ -317,6 +325,8 @@ if __name__ == "__main__":
             move_node_to_workspace(get_nodes(), sys.argv[2])
         elif sys.argv[1] == "kill":
             kill_node(get_nodes())
+        elif sys.argv[1] == "to-scratchpad":
+            to_scratchpad(get_nodes())
         elif sys.argv[1] == "to-app":
             to_app(get_nodes(), sys.argv[2])
         elif sys.argv[1] == "next":
