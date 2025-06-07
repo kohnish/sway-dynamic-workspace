@@ -48,15 +48,19 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
    # Toggle swap windows within a workspace
    bindsym $mod+s exec sway-dynamic-workspace swap
 
-   # Enable quake mode with alacritty
-   for_window [app_id="alacritty_quake"] floating enable, sticky enable, exec $toggle_maximize_cmd
-   
-   # Starts alacritty when it's not started, otherwise toggle the visibility.
-   bindsym f12 exec sway-dynamic-workspace toggle-hidden alacritty_quake 'TERM_PROGRAM=alacritty_quake alacritty --class=alacritty_quake --detach'
-   
+   # Start launcher(fuzzel) to hide currently focused floating window on selection
+   bindgesture hold:3 exec sway-dynamic-workspace app-launcher
+
+   # Sway kill to skip blank node
+   bindsym mod4+q exec sway-dynamic-workspace kill
+
+   # Enable quake mode with terminal emulator(foot)
    # When the focused floating window unmaximised, resize to width 100%, height 50%, starting x and y position 0,
    # otherwise maximise (not the fullscreen of sway to keep floating behaviour)
+   set $toggle_maximize_cmd sway-dynamic-workspace toggle-maximize 100 50 0 0
+   for_window [app_id="alacritty_quake"] floating enable, sticky enable, exec $toggle_maximize_cmd
    bindsym f11 exec sway-dynamic-workspace toggle-maximize 100 50 0 0
+   bindsym f12 exec sway-dynamic-workspace toggle-hidden alacritty_quake 'TERM_PROGRAM=alacritty_quake alacritty --class=alacritty_quake'
    
    # For waybar user, correct the size of quake mode display calculating from the (non-)waybar position.
    bindsym ctrl+shift+p exec sh -c "pkill -SIGUSR1 waybar ; $toggle_maximize_cmd ; $toggle_maximize_cmd"
