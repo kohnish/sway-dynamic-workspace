@@ -274,7 +274,17 @@ def move_node_to_workspace(node_info: NodeInfo, target_index):
 def prompt_app_switcher(node_info: NodeInfo):
     str_list = ""
     for _, node in node_info.nodes.items():
-        str_list += "{0}\n".format(node.window_name)
+        app_name_orig = ""
+        app_name = ""
+        win_name = ""
+        if node.name!= node.window_name:
+            app_name_orig = node.name.split(".")[-1]
+        if app_name_orig.lower() not in node.window_name.lower():
+            win_name = node.window_name
+            app_name = app_name_orig + " - "
+        else:
+            app_name = app_name_orig
+        str_list += "{0}{1}\n".format(app_name, win_name)
     fuzzel_cmd = "fuzzel -l {0} --index --no-run-if-empty -d".format(str_list.count('\n'))
     chosen_idx = int(subprocess.check_output(fuzzel_cmd.split(), input=str_list, text=True))
     if not node_info.curr_node.tiled:
