@@ -53,7 +53,7 @@ Enable dynamic workspace and empty workspace for sway like gnome and bspwm
 
    # Sway kill to skip blank node
    bindsym mod4+q exec sway-dynamic-workspace kill
-   bindsym mod4+shift+- exec sway-dyanamic-workspace to-scratchpad
+   bindsym mod4+shift+- exec sway-dynamic-workspace to-scratchpad
 
    # Enable quake mode with terminal emulator(foot)
    # When the focused floating window unmaximised, resize to width 100%, height 50%, starting x and y position 0,
