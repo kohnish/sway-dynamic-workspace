@@ -320,6 +320,9 @@ def prompt_app_switcher(node_info: NodeInfo):
 
 
 def prompt_app_launcher(node_info: NodeInfo):
+    # Fuzzel opens a node behind fullscreen even when workspace is moved beforehand
+    if node_info.curr_node.fullscreen:
+        os.system("swaymsg fullscreen")
     subprocess.check_output(["fuzzel"])
     if not node_info.curr_node.tiled:
         swaymsg_hide_node(node_info.curr_node)
@@ -342,6 +345,13 @@ def toggle_bar(node_info: NodeInfo):
         os.system("swaymsg workspace {0}".format(find_empty_workspace(node_info)))
     else:
         os.system("pkill -SIGUSR1 waybar")
+
+
+def copyq(node_info: NodeInfo):
+    if node_info.curr_node.fullscreen:
+        os.system("swaymsg workspace {0}, exec \"sh -c 'pgrep copyq || copyq --start-server' && copyq toggle\"".format(find_empty_workspace(node_info)))
+    else:
+        os.system("sh -c 'pgrep copyq || copyq --start-server' && copyq toggle")
 
 
 if __name__ == "__main__":
@@ -379,6 +389,8 @@ if __name__ == "__main__":
             prompt_app_switcher(get_nodes())
         elif sys.argv[1] == "toggle-bar":
             toggle_bar(get_nodes())
+        elif sys.argv[1] == "copyq":
+            copyq(get_nodes())
         elif sys.argv[1] == "app-launcher":
             prompt_app_launcher(get_nodes())
     else:
