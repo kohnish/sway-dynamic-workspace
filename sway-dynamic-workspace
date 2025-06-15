@@ -145,7 +145,7 @@ def dict_to_node_info(node_tree_dict):
             else:
                 workspace.visible_nodes.append(curr_node)
                 node_info.nodes[curr_node.name] = curr_node
-                if curr_node.tiled:
+                if curr_node.tiled or curr_node.fullscreen:
                     workspace.tiled_nodes.append(curr_node)
                     node_info.tiled_nodes.append(curr_node)
             if ws_node["focused"]:
@@ -185,21 +185,21 @@ def move_to_new_workspace(node_info):
 
 
 def next_workspace(node_info):
-    if not node_info.curr_node.tiled:
+    if not node_info.curr_node.tiled and not node_info.curr_node.fullscreen:
         swaymsg_hide_node(node_info.curr_node)
     if node_info.curr_node.workspace.id != node_info.workspaces[-1].id:
         os.system("swaymsg workspace next")
 
 
 def prev_workspace(node_info):
-    if not node_info.curr_node.tiled:
+    if not node_info.curr_node.tiled and not node_info.curr_node.fullscreen:
         swaymsg_hide_node(node_info.curr_node)
     if node_info.curr_node.workspace.id != node_info.workspaces[0].id:
         os.system("swaymsg workspace prev")
 
 
 def next_node(node_info: NodeInfo):
-    if not node_info.curr_node.tiled:
+    if not node_info.curr_node.tiled and not node_info.curr_node.fullscreen:
         swaymsg_hide_node(node_info.curr_node)
     nodes = node_info.tiled_nodes
     for index, node in enumerate(nodes):
@@ -237,9 +237,11 @@ def toggle_hidden(node_info: NodeInfo, name, cmd):
         os.system(cmd)
         return
     if node_info.curr_node.id == target_node.id:
-        if len(node_info.curr_node.workspace.visible_nodes) == 1:
-            prev_workspace(node_info)
-        swaymsg_hide_node(target_node)
+        change_ws()
+        if node_info.curr_node.fullscreen:
+            change_ws()
+        else:
+            swaymsg_hide_node(target_node)
     else:
         if target_node.hidden:
             change_ws()
@@ -335,6 +337,13 @@ def to_scratchpad(node_info: NodeInfo):
     os.system("swaymsg move scratchpad")
 
 
+def toggle_bar(node_info: NodeInfo):
+    if node_info.curr_node.fullscreen:
+        os.system("swaymsg workspace {0}".format(find_empty_workspace(node_info)))
+    else:
+        os.system("pkill -SIGUSR1 waybar")
+
+
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc >= 2:
@@ -368,6 +377,8 @@ if __name__ == "__main__":
             toggle_maximize(get_nodes(), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]))
         elif sys.argv[1] == "app-switcher":
             prompt_app_switcher(get_nodes())
+        elif sys.argv[1] == "toggle-bar":
+            toggle_bar(get_nodes())
         elif sys.argv[1] == "app-launcher":
             prompt_app_launcher(get_nodes())
     else:
