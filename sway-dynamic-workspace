@@ -29,6 +29,7 @@ class Node:
     pos_y: int = -1
     floating: bool = False
     tiled: bool = False
+    fullscreen: bool = False
 
 
 @dataclass
@@ -82,8 +83,9 @@ def create_node(node, workspace, max_width=-1, max_height=-1):
         x = node["rect"]["x"]
         y = node["rect"]["y"]
         floating = node["floating"] == "user_on"
+        fullscreen = node["fullscreen_mode"]
         tiled = not floating and app_name != HELLO_WAYLAND_WINDOW_NAME
-        return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, x, y, floating, tiled)
+        return Node(workspace, node_id, app_name, win_name, False, width, height, max_width, max_height, x, y, floating, tiled, fullscreen)
 
 
 def swaymsg_hide_node(node):
@@ -227,11 +229,32 @@ def next_node_in_the_same_workspace(node_info: NodeInfo):
 
 def toggle_hidden(node_info: NodeInfo, name, cmd):
     target_node = node_info.nodes.get(name)
+    change_ws = lambda: None
+    if node_info.curr_node.fullscreen:
+        change_ws = lambda: os.system("swaymsg workspace {0}".format(find_empty_workspace(node_info)))
+    if not target_node:
+        change_ws()
+        os.system(cmd)
+        return
+    if node_info.curr_node.id == target_node.id:
+        if len(node_info.curr_node.workspace.visible_nodes) == 1:
+            prev_workspace(node_info)
+        swaymsg_hide_node(target_node)
+    else:
+        if target_node.hidden:
+            change_ws()
+            swaymsg_unhide_node(target_node)
+        else:
+            swaymsg_focus_on_node(target_node)
+
+
+def toggle_app_focus(node_info: NodeInfo, name, cmd):
+    target_node = node_info.nodes.get(name)
     if not target_node:
         os.system(cmd)
         return
     if node_info.curr_node.id == target_node.id:
-        swaymsg_hide_node(target_node)
+        prev_workspace(node_info)
     else:
         if target_node.hidden:
             swaymsg_unhide_node(target_node)
@@ -339,6 +362,8 @@ if __name__ == "__main__":
             os.system("swaymsg swap container with con_id {0}".format(next_node_in_the_same_workspace(get_nodes())))
         elif sys.argv[1] == "toggle-hidden":
             toggle_hidden(get_nodes(), sys.argv[2], sys.argv[3])
+        elif sys.argv[1] == "toggle-app-focus":
+            toggle_app_focus(get_nodes(), sys.argv[2], sys.argv[3])
         elif sys.argv[1] == "toggle-maximize":
             toggle_maximize(get_nodes(), int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]))
         elif sys.argv[1] == "app-switcher":
